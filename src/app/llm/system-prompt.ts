@@ -30,7 +30,7 @@ export function buildSystemPrompt(ctx: SkillContext): string {
 	- **当用户查询品牌可预约时段时（如"周末LV有档期吗"、"Hermès今天还能约吗"），必须调用 appointment 工具**
 	- **当用户查询预约状态时（如"我的预约几点"、"我约的Chanel几点"），必须调用 appointment 工具**
 	- **当用户在选档期流程中选择了时段（如"14:00"），必须调用 appointment 工具**
-- **当用户询问品牌排队时长（如"Chanel排队多久"），必须调用 cross_sell 工具**
+- **当用户询问品牌排队时长或拥挤程度（如"Chanel排队多久"、"香奈儿人多嘛"、"人多吗"、"拥挤吗"），必须调用 cross_sell 工具**
 - **当用户询问优惠或券（如"有券吗"、"Chanel有优惠吗"），必须调用 coupon 工具**
 - **当用户表达入会意愿或询问会员信息时，必须调用 membership 工具**
 - **当用户回复「好的」「可以」「是的」等确认入会时，也必须调用 membership 工具**

@@ -265,7 +265,7 @@ export default function App() {
           <button className="w-8 h-8 flex items-center justify-center text-[#8C8278] text-lg">‹</button>
           <div className="flex items-center gap-2">
             <span className="text-[14px] tracking-[0.18em] text-[#1A1713]" style={{ fontFamily: "'Cormorant', serif" }}>
-              SKP 私享管家
+              DT-X 私享管家
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -292,7 +292,7 @@ export default function App() {
 
             <div className="relative z-10 flex flex-col justify-center pl-5 pr-2 flex-1">
               <p className="text-[10px] tracking-[0.22em] text-[#B8924A] uppercase mb-2" style={{ letterSpacing: "0.2em" }}>
-                SKP · 私享管家
+                DT-X · 私享管家
               </p>
               <p className="text-[26px] leading-tight text-[#1A1713] mb-2" style={{ fontFamily: "'Cormorant', serif", fontWeight: 400 }}>
                 您好，<br />李先生

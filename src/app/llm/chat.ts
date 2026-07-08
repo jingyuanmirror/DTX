@@ -112,6 +112,13 @@ export async function chat(
     }
 
     // Process tool calls
+    // If any tool returns a card (member-card, parking-card, etc.), it means the skill
+    // has fully handled the scenario — use the tool's reply directly instead of letting
+    // the LLM rephrase it (which may produce "verify your info" instead of showing the card).
+    let shouldShortCircuit = false;
+    let shortCircuitReply: string | undefined;
+    let shortCircuitQuickReplies: string[] | undefined;
+
     for (const toolCall of assistantMessage.tool_calls) {
       let args: Record<string, unknown> = {};
       try {
@@ -156,6 +163,17 @@ export async function chat(
       if (toolResult.brandCards) collectedBrandCards = toolResult.brandCards;
       if (toolResult.appointmentCard) collectedAppointmentCard = toolResult.appointmentCard;
 
+      // If a card was returned, short-circuit: use the tool's reply directly
+      const hasCard = toolResult.card || toolResult.parkingCard || toolResult.queueCard
+        || toolResult.reservationCard || toolResult.coupons || toolResult.brandCards
+        || toolResult.appointmentCard;
+      if (hasCard) {
+        shouldShortCircuit = true;
+        const data = toolResult.data as { reply?: string; quickReplies?: string[] };
+        if (data?.reply) shortCircuitReply = data.reply;
+        if (data?.quickReplies) shortCircuitQuickReplies = data.quickReplies;
+      }
+
       // Add tool result to messages for the LLM
       const toolMessage: ChatMessage = {
         role: "tool",
@@ -164,6 +182,25 @@ export async function chat(
       };
       messages.push(toolMessage);
       newMessages.push(toolMessage);
+    }
+
+    // Short-circuit: skill with card has fully handled the scenario, return directly
+    if (shouldShortCircuit) {
+      const response: AgentResponse = {
+        text: shortCircuitReply || "已为您办理完成。",
+        quickReplies: shortCircuitQuickReplies ?? ["查询停车状态", "今日专属优惠"],
+        card: collectedCard,
+        parkingCard: collectedParkingCard,
+        reservationCard: collectedReservationCard,
+        coupons: collectedCoupons,
+        queueCard: collectedQueueCard,
+        brandCards: collectedBrandCards,
+        appointmentCard: collectedAppointmentCard,
+      };
+      if (Object.keys(collectedSideEffects).length > 0) {
+        response.sideEffects = collectedSideEffects as AgentSideEffects;
+      }
+      return { response, newMessages };
     }
 
     // The loop continues — the LLM will see tool results and generate a final response

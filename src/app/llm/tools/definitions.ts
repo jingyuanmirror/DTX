@@ -64,13 +64,13 @@ export const toolDefinitions: ToolDefinition[] = [
     function: {
       name: "cross_sell",
       description:
-        "查询品牌专柜排队等待时间并交叉推荐。当用户询问某个品牌排队要等多久时调用，如'Chanel排队多久'、'香奈儿排队长吗'。返回等待时长，较长时会附带推荐优惠券。",
+        "查询品牌专柜排队等待时间并交叉推荐。当用户询问某个品牌排队要等多久、是否拥挤、人多不多时调用，如'Chanel排队多久'、'香奈儿排队长吗'、'香奈儿人多嘛'、'人多吗'、'拥挤吗'。返回等待时长，较长时会附带推荐优惠券。",
       parameters: {
         type: "object",
         properties: {
           text: {
             type: "string",
-            description: "用户关于品牌排队的原始表述，如'Chanel排队多久'",
+            description: "用户关于品牌排队的原始表述，如'Chanel排队多久'或'香奈儿人多嘛'",
           },
         },
         required: ["text"],

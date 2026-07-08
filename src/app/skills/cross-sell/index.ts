@@ -27,7 +27,7 @@ const CROSS_SELL_COFFEE = {
 const DEMO_QUEUE_CASE = {
   name: "Chanel 精品店",
   floor: "1F-A12",
-  waitMin: 36,
+  waitMin: 60,
 };
 
 function buildDemoResponse() {
@@ -35,7 +35,7 @@ function buildDemoResponse() {
   const crossCoupon = { type: "coupon-card" as const, ...CROSS_SELL_COFFEE };
 
   return {
-    text: `李先生，当前暂未查询到实时排队接口数据，以下为演示案例：${info.name}（${info.floor}）预计等待约${info.waitMin}分钟。\n\n排队时间较长，建议您先前往4F「${crossCoupon.brand}」稍作休息，我已为您附上${crossCoupon.discount}${crossCoupon.title}供演示使用。`,
+    text: `李先生，当前暂未查询到实时排队接口数据，以下为演示案例：${info.name}（${info.floor}）预计等待约${info.waitMin}分钟。\n\n排队时间较长，建议您先前往4F「${crossCoupon.brand}」稍作休息，我已为您附上${crossCoupon.discount}${crossCoupon.title}。`,
     quickReplies: ["帮我托管排队", "查看FLAIR菜单", "还有其他品牌吗"],
     coupons: [crossCoupon],
   };
@@ -43,7 +43,7 @@ function buildDemoResponse() {
 
 export const crossSellSkill: Skill = {
   name: "cross-sell",
-  intentDescription: "处理品牌排队拥挤与等待时长咨询，并在等待较长时给出交叉营销建议与权益券。",
+  intentDescription: "处理品牌排队拥挤与等待时长咨询（如\"人多嘛\"、\"拥挤吗\"、\"排队多久\"），并在等待较长时给出交叉营销建议与权益券。",
   match: () => true,
   handle: ({ text }) => {
     const lowerValue = text.toLowerCase();
