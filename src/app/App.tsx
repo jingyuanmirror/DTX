@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Bubble } from "./components/chat/Bubble";
 import { CatMascot } from "./components/CatMascot";
+import { FeatureIcon } from "./components/FeatureIcon";
 import { INITIAL_MESSAGES } from "./data/initial-messages";
 import { FEATURE_ENTRIES } from "./data/feature-entries";
 import { route } from "./agent";
@@ -294,12 +295,11 @@ export default function App() {
         <div className="flex-shrink-0 flex items-center justify-between px-5 pt-4 pb-3 relative z-20">
           <button className="w-8 h-8 flex items-center justify-center text-[#A89D8A] text-lg">‹</button>
           <div className="flex items-center gap-2">
-            <span className="text-[14px] tracking-[0.14em] text-[#20201C]" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>
-              DTX专享管家
+            <span className="text-[14px] tracking-[0.18em] text-[#20201C]" style={{ fontFamily: "'Cormorant', serif", fontWeight: 500 }}>
+              DTX · 专享管家
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button className="w-8 h-8 flex items-center justify-center text-[#A89D8A] text-sm">⊙</button>
             <button className="w-8 h-8 flex items-center justify-center text-[#A89D8A] text-sm">···</button>
           </div>
         </div>
@@ -315,60 +315,66 @@ export default function App() {
             className="relative w-full flex items-stretch overflow-hidden"
             style={{
               height: 172,
-              background: "linear-gradient(110deg, #FFF7EC 0%, #FCEDD8 55%, #F6E0C2 100%)",
+              background: "linear-gradient(110deg, #FFF7EC 0%, #F6E0C2 100%)",
             }}
           >
-            <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "repeating-linear-gradient(0deg, #E8B470 0px, #E8B470 1px, transparent 1px, transparent 18px)" }} />
-
-            <div className="relative z-10 flex flex-col justify-center pl-5 pr-2 flex-1">
-              <p className="text-[10px] tracking-[0.22em] text-[#F0B040] uppercase mb-2" style={{ letterSpacing: "0.2em" }}>
-                DTX · 专享管家
+            <div className="relative z-10 flex flex-col justify-center pl-6 pr-2 flex-1">
+              <p className="text-[10px] tracking-[0.22em] text-[#F0B040] uppercase mb-3" style={{ letterSpacing: "0.2em", fontFamily: "'DM Sans', sans-serif" }}>
+                DTX · CONCIERGE
               </p>
-              <p className="text-[22px] leading-tight text-[#20201C] mb-2 whitespace-nowrap" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>
+              <p className="text-[26px] leading-tight text-[#20201C] mb-4 whitespace-nowrap" style={{ fontFamily: "'Cormorant', serif", fontWeight: 500 }}>
                 早上好，李先生
               </p>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF8E] animate-pulse" />
-                <span className="text-[10px] tracking-widest text-[#F0B040]">
+                <span className="text-[10px] tracking-widest text-[#A89D8A]">
                   喵星人在线，随时聊天
                 </span>
               </div>
 
-              <div className="mt-3 self-start px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(240,176,64,0.3)" }}>
-                <span className="text-[9px] text-[#A89D8A] tracking-wider mr-2">积分余额</span>
-                <span className="text-[12px] text-[#F0B040]" style={{ fontFamily: "'DM Mono', monospace" }}>
+              <div className="mt-5 self-start flex items-center gap-1.5 px-2.5 h-5 rounded-full" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(240,176,64,0.3)" }}>
+                <span className="text-[8px] text-[#A89D8A] tracking-wider">积分余额</span>
+                <span className="text-[10px] text-[#F0B040]" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 400 }}>
                   {userProfile.isMember ? "128,400" : "未开通"}
                 </span>
               </div>
             </div>
 
-            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 196 }}>
-              <div className="absolute inset-y-0 left-0 w-16 z-10" style={{ background: "linear-gradient(to right, #FCEDD8, transparent)" }} />
+            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 168 }}>
+              <div className="absolute inset-y-0 left-0 w-16 z-10" style={{ background: "linear-gradient(to right, #F6E0C2, transparent)" }} />
               <CatMascot
                 className="relative z-10"
-                style={{ width: 158, height: 158 }}
+                style={{ width: 150, height: 150, marginRight: 8 }}
               />
             </div>
           </div>
 
-          <div className="px-4 pt-4 pb-5 grid grid-cols-3 gap-2.5">
+          <div className="px-4 pt-5 pb-6 grid grid-cols-3 gap-3">
             {FEATURE_ENTRIES.map((feature) => (
               <motion.button
                 key={feature.title}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => navigateTo(feature.title)}
-                className="flex flex-col items-center gap-2 px-2 py-3.5 text-center w-full transition-all duration-200 rounded-[14px]"
+                className="relative flex items-center justify-center px-3 py-3.5 text-center w-full transition-all duration-200 rounded-[14px]"
                 style={{
-                  background: feature.accent ? "linear-gradient(135deg, #FBF3E2 0%, #F3E6C8 100%)" : "#FFFFFF",
-                  border: feature.accent ? "1px solid #F0B04040" : "1px solid rgba(240,176,64,0.14)",
-                  boxShadow: "0 1px 4px rgba(42,37,32,0.05)",
+                  background: "#FFFFFF",
+                  border: "1px solid rgba(240,176,64,0.16)",
+                  boxShadow: "0 1px 3px rgba(42,37,32,0.04)",
                 }}
               >
-                <div>
-                  <p className="text-[12px] text-[#20201C] mb-0.5" style={{ fontWeight: 500 }}>
-                    {feature.title}
-                  </p>
-                  <p className="text-[9px] text-[#A89D8A] leading-tight">{feature.sub}</p>
+                {feature.accent && (
+                  <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: "#8070F0" }} />
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span className="flex-shrink-0" style={{ color: "#B7924A" }}>
+                      <FeatureIcon name={feature.iconName!} width={17} height={17} />
+                    </span>
+                    <p className="text-[12px] text-[#20201C]" style={{ fontWeight: 500 }}>
+                      {feature.title}
+                    </p>
+                  </div>
+                  <p className="text-[9px] text-[#A89D8A] leading-tight mt-1">{feature.sub}</p>
                 </div>
               </motion.button>
             ))}
@@ -401,7 +407,7 @@ export default function App() {
                       <motion.div
                         key={i}
                         className="w-[5px] h-[5px] rounded-full"
-                        style={{ background: "#F0B04060" }}
+                        style={{ background: "#8070F060" }}
                         animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.15, 0.8] }}
                         transition={{ duration: 1, delay, repeat: Infinity }}
                       />

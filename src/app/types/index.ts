@@ -243,6 +243,7 @@ export interface UserProfile {
 
 export interface FeatureEntry {
   icon: string;
+  iconName?: "guide" | "member" | "activity" | "coupon" | "checkin" | "invite";
   title: string;
   sub: string;
   accent: boolean;

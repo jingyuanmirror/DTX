@@ -44,9 +44,9 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
               isAgent ? "rounded-tl-[6px]" : "rounded-tr-[6px]"
             } ${isAgent && hasRichCard ? "self-start" : ""}`}
             style={{
-              background: isAgent ? "#FFFFFF" : "#F0B040",
+              background: isAgent ? "#FFFFFF" : "#8070F0",
               border: isAgent ? "1px solid rgba(240,176,64,0.16)" : "none",
-              boxShadow: isAgent ? "0 1px 3px rgba(42,37,32,0.05)" : "0 3px 12px rgba(240,176,64,0.28)",
+              boxShadow: isAgent ? "0 1px 3px rgba(42,37,32,0.05)" : "0 3px 12px rgba(128,112,240,0.32)",
               color: isAgent ? "#20201C" : "#FFFFFF",
               fontFamily: "'DM Sans', sans-serif",
               fontWeight: 400,
@@ -98,9 +98,9 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
               onClick={() => onQuickReply(reply)}
               className="text-[11px] px-3 py-1.5 tracking-wide transition-all duration-200 active:scale-95 rounded-full"
               style={{
-                background: "#F4FBF6",
-                border: "1px solid rgba(76,175,142,0.35)",
-                color: "#3E9C7E",
+                background: "#EFEEFE",
+                border: "1px solid rgba(128,112,240,0.32)",
+                color: "#6D5DE0",
                 boxShadow: "0 1px 3px rgba(42,37,32,0.04)",
               }}
             >
