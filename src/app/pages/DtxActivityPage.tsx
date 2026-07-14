@@ -1,8 +1,8 @@
-interface SkpActivityPageProps {
+interface DtxActivityPageProps {
   onBack: () => void;
 }
 
-export function SkpActivityPage({ onBack }: SkpActivityPageProps) {
+export function DtxActivityPage({ onBack }: DtxActivityPageProps) {
   return (
     <div className="flex flex-col h-full" style={{ background: "#F5F2ED" }}>
       {/* ── Header ── */}
@@ -13,7 +13,7 @@ export function SkpActivityPage({ onBack }: SkpActivityPageProps) {
           </svg>
         </button>
         <span className="text-[14px] tracking-[0.15em] text-[#1A1713]" style={{ fontFamily: "'Cormorant', serif", fontWeight: 500 }}>
-          SKP活动
+          活动中心
         </span>
         <div className="w-8" />
       </div>
@@ -21,8 +21,8 @@ export function SkpActivityPage({ onBack }: SkpActivityPageProps) {
       {/* ── Screenshot Image ── */}
       <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
         <img
-          src="/skp-activity.png"
-          alt="SKP活动"
+          src="/activity.png"
+          alt="活动中心"
           className="w-full"
           style={{ display: "block" }}
         />

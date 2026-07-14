@@ -60,7 +60,12 @@ export async function chat(
   // Accumulate side effects and cards from all tool calls in this turn
   const collectedSideEffects: Partial<AgentSideEffects> = {};
   let collectedCard: AgentResponse["card"] = undefined;
+  let collectedMembershipAuthorizationCard: AgentResponse["membershipAuthorizationCard"] = undefined;
+  let collectedNewMemberOfferCard: AgentResponse["newMemberOfferCard"] = undefined;
   let collectedParkingCard: AgentResponse["parkingCard"] = undefined;
+  let collectedParkingShoppingGuideCard: AgentResponse["parkingShoppingGuideCard"] = undefined;
+  let collectedActivityIntroCard: AgentResponse["activityIntroCard"] = undefined;
+  let collectedProductIntroCard: AgentResponse["productIntroCard"] = undefined;
   let collectedCoupons: AgentResponse["coupons"] = undefined;
   let collectedQueueCard: AgentResponse["queueCard"] = undefined;
   let collectedReservationCard: AgentResponse["reservationCard"] = undefined;
@@ -95,7 +100,12 @@ export async function chat(
         text: text || "已收到您的需求，正在为您安排。",
         quickReplies: quickReplies ?? ["查询停车状态", "今日专属优惠"],
         card: collectedCard,
+        membershipAuthorizationCard: collectedMembershipAuthorizationCard,
+        newMemberOfferCard: collectedNewMemberOfferCard,
         parkingCard: collectedParkingCard,
+        parkingShoppingGuideCard: collectedParkingShoppingGuideCard,
+        activityIntroCard: collectedActivityIntroCard,
+        productIntroCard: collectedProductIntroCard,
         reservationCard: collectedReservationCard,
         coupons: collectedCoupons,
         queueCard: collectedQueueCard,
@@ -156,7 +166,12 @@ export async function chat(
 
       // Collect cards
       if (toolResult.card) collectedCard = toolResult.card;
+      if (toolResult.membershipAuthorizationCard) collectedMembershipAuthorizationCard = toolResult.membershipAuthorizationCard;
+      if (toolResult.newMemberOfferCard) collectedNewMemberOfferCard = toolResult.newMemberOfferCard;
       if (toolResult.parkingCard) collectedParkingCard = toolResult.parkingCard;
+      if (toolResult.parkingShoppingGuideCard) collectedParkingShoppingGuideCard = toolResult.parkingShoppingGuideCard;
+      if (toolResult.activityIntroCard) collectedActivityIntroCard = toolResult.activityIntroCard;
+      if (toolResult.productIntroCard) collectedProductIntroCard = toolResult.productIntroCard;
       if (toolResult.coupons) collectedCoupons = toolResult.coupons;
       if (toolResult.queueCard) collectedQueueCard = toolResult.queueCard;
       if (toolResult.reservationCard) collectedReservationCard = toolResult.reservationCard;
@@ -164,7 +179,9 @@ export async function chat(
       if (toolResult.appointmentCard) collectedAppointmentCard = toolResult.appointmentCard;
 
       // If a card was returned, short-circuit: use the tool's reply directly
-      const hasCard = toolResult.card || toolResult.parkingCard || toolResult.queueCard
+      const hasCard = toolResult.card || toolResult.membershipAuthorizationCard || toolResult.newMemberOfferCard
+        || toolResult.parkingCard || toolResult.parkingShoppingGuideCard || toolResult.activityIntroCard
+        || toolResult.productIntroCard || toolResult.queueCard
         || toolResult.reservationCard || toolResult.coupons || toolResult.brandCards
         || toolResult.appointmentCard;
       if (hasCard) {
@@ -190,7 +207,12 @@ export async function chat(
         text: shortCircuitReply || "已为您办理完成。",
         quickReplies: shortCircuitQuickReplies ?? ["查询停车状态", "今日专属优惠"],
         card: collectedCard,
+        membershipAuthorizationCard: collectedMembershipAuthorizationCard,
+        newMemberOfferCard: collectedNewMemberOfferCard,
         parkingCard: collectedParkingCard,
+        parkingShoppingGuideCard: collectedParkingShoppingGuideCard,
+        activityIntroCard: collectedActivityIntroCard,
+        productIntroCard: collectedProductIntroCard,
         reservationCard: collectedReservationCard,
         coupons: collectedCoupons,
         queueCard: collectedQueueCard,
@@ -215,7 +237,12 @@ export async function chat(
         ? (collectedSideEffects as AgentSideEffects)
         : undefined,
       card: collectedCard,
+      membershipAuthorizationCard: collectedMembershipAuthorizationCard,
+      newMemberOfferCard: collectedNewMemberOfferCard,
       parkingCard: collectedParkingCard,
+      parkingShoppingGuideCard: collectedParkingShoppingGuideCard,
+      activityIntroCard: collectedActivityIntroCard,
+      productIntroCard: collectedProductIntroCard,
       reservationCard: collectedReservationCard,
       coupons: collectedCoupons,
       queueCard: collectedQueueCard,

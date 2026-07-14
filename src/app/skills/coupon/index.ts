@@ -11,8 +11,12 @@ interface CouponDef {
 }
 
 const COUPON_DB: CouponDef[] = [
-  { brand: "SKP", discount: "9折", title: "商场通用券", validUntil: "2026.07.31", scope: "mall", triggers: [] },
-  { brand: "SKP", discount: "满2000减100", title: "全场满减券", validUntil: "2026.07.31", scope: "mall", triggers: [] },
+  { brand: "DTX", discount: "9折", title: "商场通用券", validUntil: "2026.07.31", scope: "mall", triggers: [] },
+  { brand: "DTX", discount: "满2000减100", title: "全场满减券", validUntil: "2026.07.31", scope: "mall", triggers: [] },
+  { brand: "DTX精品超市", discount: "满199减30", title: "生鲜专属券", validUntil: "2026.07.31", scope: "brand", triggers: ["超市", "生鲜", "dtx精品", "精品超市"] },
+  { brand: "海底捞", discount: "满200减20", title: "火锅优惠券", validUntil: "2026.07.31", scope: "brand", triggers: ["海底捞", "火锅"] },
+  { brand: "翠园", discount: "8.8折", title: "粤菜家庭餐券", validUntil: "2026.07.20", scope: "brand", triggers: ["翠园", "粤菜"] },
+  { brand: "鼎泰丰", discount: "满150减15", title: "小笼包礼券", validUntil: "2026.07.31", scope: "brand", triggers: ["鼎泰丰", "小笼"] },
   { brand: "Chanel", discount: "8.5折", title: "精品店专属券", validUntil: "2026.07.15", scope: "brand", triggers: ["chanel", "香奈儿"] },
   { brand: "Hermès", discount: "专属礼遇", title: "新品预览优先券", validUntil: "2026.08.31", scope: "brand", triggers: ["hermes", "爱马仕", "hermès"] },
   { brand: "Dior", discount: "满3000减300", title: "美妆与精品券", validUntil: "2026.07.31", scope: "brand", triggers: ["dior", "迪奥"] },
@@ -42,16 +46,16 @@ export const couponSkill: Skill = {
       }
 
       return {
-        text: `李先生，为您找到了${matchedBrandCoupon.brand}的专属优惠券，同时附上一张商场通用券供您使用。`,
-        quickReplies: ["查看更多优惠", "联系专属SA", "查询停车状态"],
+        text: `为您找到了${matchedBrandCoupon.brand}的专属优惠券，同时附上一张商场通用券供您使用。`,
+        quickReplies: ["超市有券吗", "海底捞有券吗", "查询停车状态"],
         coupons,
       };
     }
 
     const mallCoupons = COUPON_DB.filter((coupon) => coupon.scope === "mall");
     return {
-      text: "李先生，目前以下商场通用优惠券可供领取，您可以直接使用：",
-      quickReplies: ["Chanel有券吗", "Hermès有券吗", "查询停车状态"],
+      text: "目前以下商场通用优惠券可供领取，您可以直接使用：",
+      quickReplies: ["超市有券吗", "海底捞有券吗", "查询停车状态"],
       coupons: mallCoupons.map((coupon) => ({ type: "coupon-card" as const, ...coupon })),
     };
   },

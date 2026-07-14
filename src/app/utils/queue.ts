@@ -1,6 +1,9 @@
 export const QUEUE_VENUES: Record<string, { name: string; floor: string; type: "dining" | "brand" | "cafe" }> = {
   "新荣记": { name: "新荣记", floor: "5F", type: "dining" },
   "大董": { name: "大董烤鸭", floor: "4F", type: "dining" },
+  "海底捞": { name: "海底捞", floor: "5F-C01", type: "dining" },
+  "鼎泰丰": { name: "鼎泰丰", floor: "B1-A01", type: "dining" },
+  "超市": { name: "DTX精品超市", floor: "B1-01", type: "dining" },
   flair: { name: "FLAIR 高端茶饮", floor: "4F", type: "cafe" },
   chanel: { name: "Chanel 精品店", floor: "1F-A12", type: "brand" },
   "香奈儿": { name: "Chanel 精品店", floor: "1F-A12", type: "brand" },

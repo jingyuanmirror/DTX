@@ -42,7 +42,7 @@ export const queueSkill: Skill = {
       };
 
       return {
-        text: `李先生，已为您在${venue.name}（${venue.floor}）托管排队，${queueRequest.partySize}人位，取号${queueNo}。前方等候${ahead}组，预计约需${estMin}分钟。到号前我会提前提醒您，您可以在商场内自由逛逛。`,
+        text: `已为您在${venue.name}（${venue.floor}）托管排队，${queueRequest.partySize}人位，取号${queueNo}。前方等候${ahead}组，预计约需${estMin}分钟。到号前我会提前提醒您，您可以在商场内自由逛逛。`,
         quickReplies: ["查询排队进度", "今日专属优惠", "查询停车状态"],
         queueCard: {
           type: "queue-card",
@@ -65,10 +65,10 @@ export const queueSkill: Skill = {
       return {
         text:
           queueInfo.status === "ready"
-            ? `李先生，您在${queueInfo.brand}的排队已到号！请前往${queueInfo.floor}入座。`
+            ? `您在${queueInfo.brand}的排队已到号！请前往${queueInfo.floor}入座。`
             : queueInfo.status === "almost"
-              ? `李先生，您在${queueInfo.brand}的排队即将到号，前方仅剩${queueInfo.ahead}组，请准备前往。`
-              : `李先生，您在${queueInfo.brand}的排队正在进行中，前方还有${queueInfo.ahead}组等候，预计约需${queueInfo.estMin}分钟。`,
+              ? `您在${queueInfo.brand}的排队即将到号，前方仅剩${queueInfo.ahead}组，请准备前往。`
+              : `您在${queueInfo.brand}的排队正在进行中，前方还有${queueInfo.ahead}组等候，预计约需${queueInfo.estMin}分钟。`,
         quickReplies: queueInfo.status === "ready" ? ["导航到店铺", "今日专属优惠"] : ["今日专属优惠", "查询停车状态"],
         queueCard: {
           type: "queue-card",
@@ -84,8 +84,8 @@ export const queueSkill: Skill = {
     }
 
     return {
-      text: `李先生，目前暂未查询到您的实时排队记录。为便于演示，先为您展示一个示例：${DEMO_QUEUE_INFO.brand}（${DEMO_QUEUE_INFO.floor}）${DEMO_QUEUE_INFO.partySize}人位，排号${DEMO_QUEUE_INFO.queueNo}，前方${DEMO_QUEUE_INFO.ahead}组，预计约${DEMO_QUEUE_INFO.estMin}分钟。`,
-      quickReplies: ["帮我排新荣记", "帮我排Chanel", "查询排队进度"],
+      text: `目前暂未查询到您的实时排队记录。为便于演示，先为您展示一个示例：${DEMO_QUEUE_INFO.brand}（${DEMO_QUEUE_INFO.floor}）${DEMO_QUEUE_INFO.partySize}人位，排号${DEMO_QUEUE_INFO.queueNo}，前方${DEMO_QUEUE_INFO.ahead}组，预计约${DEMO_QUEUE_INFO.estMin}分钟。`,
+      quickReplies: ["帮我排新荣记", "帮我排海底捞", "查询排队进度"],
       queueCard: {
         type: "queue-card",
         brand: DEMO_QUEUE_INFO.brand,

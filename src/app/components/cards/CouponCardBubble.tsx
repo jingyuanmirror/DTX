@@ -15,30 +15,30 @@ export function CouponCardBubble({ coupon }: { coupon: CouponCard }) {
         maxWidth: 300,
         borderRadius: 14,
         background: "#FFFFFF",
-        border: "1px solid rgba(184,146,74,0.15)",
-        boxShadow: "0 2px 12px rgba(26,23,19,0.06)",
+        border: "1px solid rgba(240,176,64,0.16)",
+        boxShadow: "0 2px 12px rgba(42,37,32,0.06)",
       }}
     >
       <div
         className="h-[3px]"
         style={{
           background: isMallWide
-            ? "linear-gradient(90deg, #B8924A, #D4B978, #B8924A)"
-            : "linear-gradient(90deg, #C9A86C, #8BA888, #C9A86C)",
+            ? "linear-gradient(90deg, #4CAF8E, #6BC4A6, #4CAF8E)"
+            : "linear-gradient(90deg, #F0B040, #FFCC66, #F0B040)",
         }}
       />
 
       <div className="px-4 pt-3 pb-3.5">
         <div className="flex items-center justify-between mb-2.5">
-          <span className="text-[12px] text-[#1A1713]" style={{ fontWeight: 600, letterSpacing: "0.02em" }}>
+          <span className="text-[12px] text-[#20201C]" style={{ fontWeight: 600, letterSpacing: "0.02em" }}>
             {coupon.brand}
           </span>
           <span
             className="text-[8px] tracking-wider px-2 py-0.5 rounded-full"
             style={{
-              background: isMallWide ? "rgba(184,146,74,0.1)" : "rgba(139,168,136,0.1)",
-              color: isMallWide ? "#B8924A" : "#6B8C6A",
-              border: isMallWide ? "1px solid rgba(184,146,74,0.2)" : "1px solid rgba(139,168,136,0.2)",
+              background: isMallWide ? "rgba(76,175,142,0.1)" : "rgba(240,176,64,0.12)",
+              color: isMallWide ? "#3E9C7E" : "#C8841E",
+              border: isMallWide ? "1px solid rgba(76,175,142,0.2)" : "1px solid rgba(240,176,64,0.22)",
             }}
           >
             {isMallWide ? "商场通用" : "品牌专属"}
@@ -46,19 +46,19 @@ export function CouponCardBubble({ coupon }: { coupon: CouponCard }) {
         </div>
 
         <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-[22px] text-[#B8924A]" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, lineHeight: 1 }}>
+          <span className="text-[22px] text-[#F0B040]" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, lineHeight: 1 }}>
             {coupon.discount}
           </span>
-          <span className="text-[12px] text-[#1A1713]" style={{ fontWeight: 500 }}>
+          <span className="text-[12px] text-[#20201C]" style={{ fontWeight: 500 }}>
             {coupon.title}
           </span>
         </div>
 
-        <p className="text-[9px] text-[#C8BEAF] tracking-wide">有效期至 {coupon.validUntil}</p>
+        <p className="text-[9px] text-[#A89D8A] tracking-wide">有效期至 {coupon.validUntil}</p>
       </div>
 
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2.5 h-5 rounded-r-full" style={{ background: "#F5F2ED" }} />
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-5 rounded-l-full" style={{ background: "#F5F2ED" }} />
+      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2.5 h-5 rounded-r-full" style={{ background: "#FEF3EB" }} />
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-5 rounded-l-full" style={{ background: "#FEF3EB" }} />
     </motion.div>
   );
 }

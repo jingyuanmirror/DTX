@@ -81,8 +81,41 @@ async function routeBySkills(ctx: SkillContext): Promise<AgentResponse | null> {
     }
   }
 
+  if (ctx.userProfile._membershipAuthorizationPending && !ctx.userProfile.isMember) {
+    const membershipSkill = skills.find((skill) => skill.name === "membership");
+    if (membershipSkill) {
+      return await membershipSkill.handle(ctx);
+    }
+  }
+
+  const qixiActivityPattern = /七夕(?:打卡|活动|碰出好喜气)|七夕.*(?:怎么玩|有什么)/;
+  if (qixiActivityPattern.test(ctx.text)) {
+    const activityIntroSkill = skills.find((skill) => skill.name === "activity-intro");
+    if (activityIntroSkill) {
+      return await activityIntroSkill.handle(ctx);
+    }
+  }
+
+  const productNamePattern = /茉莉拿铁|瑞幸茉莉|春季茉莉|精选面膜|保湿面膜|屈臣氏面膜|桂花定胜糕|定胜糕(?:礼盒)?|知味观糕点|七夕限定礼盒|七夕礼盒|心意礼盒|七夕礼品/;
+  if (productNamePattern.test(ctx.text)) {
+    const productIntroSkill = skills.find((skill) => skill.name === "product-intro");
+    if (productIntroSkill) {
+      return await productIntroSkill.handle(ctx);
+    }
+  }
+
+  // Deterministic pattern matching for dining queries — bypass LLM classifier
+  // "今天吃什么/吃什么/午餐/晚餐" → service-qa (餐饮推荐)
+  const diningPattern = /今天吃(什么|啥)|吃(什么|啥)(好|呢)?|午餐(吃|推荐)?|晚餐(吃|推荐)?|有什么好吃|有啥好吃/;
+  if (diningPattern.test(ctx.text)) {
+    const serviceQASkill = skills.find((skill) => skill.name === "service-qa");
+    if (serviceQASkill) {
+      return await serviceQASkill.handle(ctx);
+    }
+  }
+
   // Deterministic pattern matching for crowd/wait-time queries — bypass LLM classifier
-  // "人多嘛/人多吗/拥挤吗/排队多久/排队长吗" + brand → cross_sell
+  // "人多嘛/人多吗/拥挤吗/排队多久/排队长吗" + brand → cross-sell
   const crowdWaitPattern = /人多[嘛吗？?]|拥挤[嘛吗？?]|排队多久|排队长[嘛吗？?]|要等多久|等多久/;
   if (crowdWaitPattern.test(ctx.text)) {
     const crossSellSkill = skills.find((skill) => skill.name === "cross-sell");
@@ -135,9 +168,9 @@ async function classifySkillIntent(text: string): Promise<string | null> {
         + "- 档期查询：\"周末LV有档期吗\"、\"Hermès今天还能约吗\"\n"
         + "- 预约状态查询：\"我的预约几点\"、\"我约的Chanel几点\"\n"
         + "- 选档期中间态：用户回复时间如\"14:00\"（上下文正在选时段时）\n"
-        + "- 重要路由规则：\"预约\"\"约档期\"关键词 → appointment（优先于queue和cross_sell）\n"
+        + "- 重要路由规则：\"预约\"\"约档期\"关键词 → appointment（优先于queue和cross-sell）\n"
         + "- \"帮我排Chanel\" → queue（\"排\"关键词路由到queue）\n"
-        + "- \"Chanel排队多久\"、\"香奈儿人多嘛\"、\"人多吗\"、\"拥挤吗\" → cross_sell（询问排队等候时长/拥挤程度）\n\n"
+        + "- \"Chanel排队多久\"、\"香奈儿人多嘛\"、\"人多吗\"、\"拥挤吗\" → cross-sell（询问排队等候时长/拥挤程度）\n\n"
         + "### membership（会员相关）\n"
         + "- 明确入会意愿：\"我想入会\"、\"帮我入会\"、\"我要入会\"、\"办会员\"、\"给我办会员\"、\"入会吧\"、\"加入会员\"、\"申请会员\"、\"现在入会\"\n"
         + "- 入会确认：\"好的\"、\"可以\"、\"是的\"（上下文涉及入会时）\n"
@@ -147,18 +180,24 @@ async function classifySkillIntent(text: string): Promise<string | null> {
         + "- 询问商场活动、pop-up、展览：\"今天有什么活动\"、\"推荐活动\"\n"
         + "- 注意：\"新品\"\"新款\"\"到货\"等关键词在品牌上下文中属于 store-consult，不属于 activity-recommend\n\n"
         + "### store-consult（品牌店铺咨询）\n"
-        + "- 品牌信息/位置/品类：\"Chanel在几楼\"、\"SKP有没有Moncler\"\n"
+        + "- 品牌信息/位置/品类：\"Chanel在几楼\"、\"DTX有没有Moncler\"\n"
         + "- 当季新品/到货：\"Chanel有什么新款包\"、\"有新品吗\"（上下文提到品牌时）\n"
-        + "- 礼品推荐/品牌推荐：\"推荐送礼品牌\"、\"送太太什么好\"\n"
+        + "- 礼品推荐/品牌推荐：\"推荐送礼品牌\"、\"送太太什么好\"、\"520送点什么\"、\"送点什么\"、\"情人节送什么\"、\"纪念日送什么\"\n"
+        + "- 生鲜好物推荐：\"新鲜好物\"、\"有什么好物\"、\"生鲜区\"、\"今日上新\"、\"超市推荐\"\n"
         + "- 联系SA导购：\"联系专属顾问\"、\"有SA吗\"\n"
-        + "- 重要：当对话上下文最近提到了某个品牌，用户追问\"新品\"\"新款\"\"到货\"\"有什么\"\"有吗\"等，应路由到 store-consult 而非 activity-recommend\n\n"
-        + "### queue / cross_sell / coupon\n"
+        + "- 重要：当对话上下文最近提到了某个品牌，用户追问\"新品\"\"新款\"\"到货\"\"有什么\"\"有吗\"等，应路由到 store-consult 而非 activity-recommend\n"
+        + "- 重要：\"新鲜好物\"\"好物推荐\"\"生鲜\"等商品推荐路由到 store-consult，不属于 activity-recommend\n\n"
+        + "### service-qa（商场服务与餐饮美食咨询）\n"
+        + "- 餐饮推荐：\"今天吃什么\"、\"午餐推荐\"、\"晚餐吃什么\"、\"有什么好吃的\"、\"吃什么\"、\"有啥吃的\"\n"
+        + "- 餐厅信息：\"新荣记\"、\"大董\"、\"鼎泰丰\"、\"海底捞\"、\"喜茶\"、\"美食广场\"等餐厅推荐与信息\n"
+        + "- 商场服务：\"服务台\"、\"轮椅\"、\"退换货\"、\"邮寄\"、\"营业时间\"、\"失物招领\"\n\n"
+        + "### queue / cross-sell / coupon\n"
         + "- 按各skill描述路由\n\n"
         + "重要：要结合上下文理解用户意图。例如：\n"
         + "- 用户说\"快到了帮我留一个\"，虽然没有\"车位\"字眼，但从语境可以判断是停车预约，应路由到 parking。\n"
         + "- 上一轮对话提到了某个品牌（如Chanel），用户追问\"有新品吗\"\"有什么新款\"\"到货了吗\"等，虽然不包含品牌名，但语境明确是品牌咨询，应路由到 store-consult，而不是 activity-recommend。\n"
         + "- 只有用\"活动\"\"pop-up\"\"展览\"\"鉴赏会\"等词明确问活动时，才路由到 activity-recommend。\n"
-        + "- \"预约\"\"约档期\"关键词路由到appointment，\"排号\"\"排队\"关键词路由到queue，\"排队多久\"\"人多嘛\"\"人多吗\"\"拥挤吗\"关键词路由到cross_sell。\n\n"
+        + "- \"预约\"\"约档期\"关键词路由到appointment，\"排号\"\"排队\"关键词路由到queue，\"排队多久\"\"人多嘛\"\"人多吗\"\"拥挤吗\"关键词路由到cross-sell。\n\n"
         + "若都不适合，输出 NONE。\n"
         + "仅允许输出 skill 名称原文或 NONE，不要输出其他内容。\n\n"
         + `候选skill：\n${skillOptions}`,

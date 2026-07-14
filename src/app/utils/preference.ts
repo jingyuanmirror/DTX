@@ -7,6 +7,10 @@ export const categoryMap: Record<string, string[]> = {
   先锋设计师: ["设计师", "潮牌", "先锋", "买手"],
   珠宝首饰: ["珠宝", "首饰", "黄金", "钻石", "饰品"],
   高端餐饮: ["餐饮", "美食", "餐厅", "吃饭", "下午茶", "咖啡"],
+  生鲜美食: ["生鲜", "超市", "新鲜", "好物", "进口食品", "有机", "水果", "蔬菜", "海鲜"],
+  亲子娱乐: ["亲子", "儿童", "孩子", "游乐", "乐高", "烘焙", "绘本"],
+  生活方式: ["生活方式", "家居", "生活", "无印", "宜家", "香薰"],
+  日常餐饮: ["吃什么", "午餐", "晚餐", "快餐", "美食广场", "火锅", "便当", "轻食"],
 };
 
 export const brandKeywords: Record<string, string[]> = {
@@ -32,6 +36,10 @@ export const brandKeywords: Record<string, string[]> = {
   "La Mer": ["la mer", "海蓝之谜"],
   "SK-II": ["sk-ii", "skii", "sk2"],
   "Tom Ford": ["tom ford", "tf"],
+  "DTX精品超市": ["dtx超市", "dtx精品", "精品超市"],
+  无印良品: ["无印", "muji"],
+  宜家: ["宜家", "ikea"],
+  乐高: ["乐高", "lego"],
 };
 
 export const itemKeywords: Record<string, string[]> = {
@@ -45,6 +53,8 @@ export const itemKeywords: Record<string, string[]> = {
   鞋履: ["鞋", "高跟鞋", "皮鞋", "运动鞋"],
   成衣: ["成衣", "大衣", "西装", "外套", "连衣裙", "裙"],
   家居: ["家居", "家居用品", "摆件", "烛台"],
+  生鲜: ["生鲜", "水果", "蔬菜", "海鲜", "肉类", "牛奶", "面包", "和牛", "大闸蟹"],
+  鲜花: ["鲜花", "花束", "玫瑰", "百合", "郁金香"],
 };
 
 export interface PreferenceDetection {

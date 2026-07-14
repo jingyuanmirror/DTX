@@ -238,7 +238,7 @@ function handleCreation(ctx: SkillContext): AgentResponse {
   // 非会员网关
   if (!userProfile.isMember) {
     return {
-      text: `李先生，${brandName || "品牌"}的专属 SA 预约需开通 SKP 会员。钻卡及以上会员可享品牌优先预约权与新品优先预览权。是否需要为您办理入会？`,
+      text: `${brandName || "品牌"}的品牌预约需开通 DTX 会员。会员可享优先预约权。是否需要为您办理入会？`,
       quickReplies: ["我想入会", "了解会员权益", "稍后再说"],
     };
   }
@@ -246,7 +246,7 @@ function handleCreation(ctx: SkillContext): AgentResponse {
   // 未匹配到品牌
   if (!entry) {
     return {
-      text: "李先生，请问您想预约哪个品牌？我可以帮您查询可预约时段并安排档期。",
+      text: "请问您想预约哪个品牌？我可以帮您查询可预约时段并安排档期。",
       quickReplies: ["预约Chanel", "预约Hermès", "预约Louis Vuitton", "预约Dior"],
     };
   }
@@ -254,7 +254,7 @@ function handleCreation(ctx: SkillContext): AgentResponse {
   // Hermès 当日不可约
   if (entry.specialNote?.includes("不支持当日")) {
     return {
-      text: `李先生，${entry.name}需提前1天预约，不支持当日预约。是否需要我帮您预约明天${entry.name}的档期？`,
+      text: `${entry.name}需提前1天预约，不支持当日预约。是否需要我帮您预约明天${entry.name}的档期？`,
       quickReplies: [`预约明天${entry.name}`, "预约其他品牌", "稍后再约"],
       sideEffects: {
         appointmentInfo: {
@@ -285,7 +285,7 @@ function handleCreation(ctx: SkillContext): AgentResponse {
 
   if (available.length === 0) {
     return {
-      text: `李先生，${entry.name}（${entry.floor}）今日已无可预约时段。是否需要我帮您预约明天或稍后日期的档期？`,
+      text: `${entry.name}（${entry.floor}）今日已无可预约时段。是否需要我帮您预约明天或稍后日期的档期？`,
       quickReplies: [`预约明天${entry.name}`, "预约其他品牌", "稍后再约"],
     };
   }
@@ -293,7 +293,7 @@ function handleCreation(ctx: SkillContext): AgentResponse {
   const slotList = available.map((s) => `🕐 ${formatTimeSlot(s)}`).join("\n");
 
   return {
-    text: `李先生，${entry.name}（${entry.floor}）今日可预约时段如下：\n${slotList}\n请选择您方便的时段，我即刻为您锁定。`,
+    text: `${entry.name}（${entry.floor}）今日可预约时段如下：\n${slotList}\n请选择您方便的时段，我即刻为您锁定。`,
     quickReplies: available.slice(0, 4),
     sideEffects: {
       appointmentInfo: {
@@ -345,14 +345,14 @@ function handleSlotQuery(ctx: SkillContext): AgentResponse {
 
   if (!entry) {
     return {
-      text: "李先生，请问您想查询哪个品牌的可预约时段？",
+      text: "请问您想查询哪个品牌的可预约时段？",
       quickReplies: ["Chanel有档期吗", "LV有档期吗", "Dior有档期吗"],
     };
   }
 
   if (entry.specialNote?.includes("不支持当日")) {
     return {
-      text: `李先生，${entry.name}需提前1天预约，不支持当日预约。明天可预约时段：${entry.slots.join(" / ")}。是否需要为您预约？`,
+      text: `${entry.name}需提前1天预约，不支持当日预约。明天可预约时段：${entry.slots.join(" / ")}。是否需要为您预约？`,
       quickReplies: [`预约明天${entry.name}`, "稍后再约"],
     };
   }
@@ -360,7 +360,7 @@ function handleSlotQuery(ctx: SkillContext): AgentResponse {
   const available = getAvailableSlots(entry, userProfile.memberTier);
   if (available.length === 0) {
     return {
-      text: `李先生，${entry.name}（${entry.floor}）今日已无可预约时段。是否需要预约明天的档期？`,
+      text: `${entry.name}（${entry.floor}）今日已无可预约时段。是否需要预约明天的档期？`,
       quickReplies: [`预约明天${entry.name}`, "预约其他品牌", "稍后再约"],
     };
   }
@@ -368,7 +368,7 @@ function handleSlotQuery(ctx: SkillContext): AgentResponse {
   const slotList = available.map((s) => `🕐 ${formatTimeSlot(s)}`).join("\n");
 
   return {
-    text: `李先生，${entry.name}（${entry.floor}）今日可预约时段：\n${slotList}\n是否需要为您预约？`,
+    text: `${entry.name}（${entry.floor}）今日可预约时段：\n${slotList}\n是否需要为您预约？`,
     quickReplies: [...available.slice(0, 2).map((s) => `预约${s}`), "稍后再约"],
   };
 }
@@ -378,7 +378,7 @@ function handleStatusQuery(ctx: SkillContext): AgentResponse {
 
   if (!appointmentInfo || appointmentInfo.flowStatus === "selecting_slot") {
     return {
-      text: "李先生，您目前暂无已确认的品牌预约。是否需要我帮您预约一个档期？",
+      text: "您目前暂无已确认的品牌预约。是否需要我帮您预约一个档期？",
       quickReplies: ["预约Chanel", "预约Hermès", "预约Louis Vuitton"],
     };
   }
@@ -401,7 +401,7 @@ function handleStatusQuery(ctx: SkillContext): AgentResponse {
   };
 
   return {
-    text: `李先生，您的预约信息如下：\n${appointmentInfo.brand}（${appointmentInfo.floor}），${appointmentInfo.timeSlot}\n专属 SA：${appointmentInfo.saName}\n预约凭证：${appointmentInfo.reservationId}`,
+    text: `您的预约信息如下：\n${appointmentInfo.brand}（${appointmentInfo.floor}），${appointmentInfo.timeSlot}\n专属 SA：${appointmentInfo.saName}\n预约凭证：${appointmentInfo.reservationId}`,
     appointmentCard: card,
   };
 }
@@ -448,7 +448,7 @@ function createConfirmation(
   };
 
   // 基础文案
-  let textReply = `李先生，已为您在 ${entry.name}（${entry.floor}）预约成功：\n📅 今日 ${timeSlot}\n👤 专属 SA：${saName}\n🔖 预约凭证：${reservationId}\n\n同时为您预留车位？`;
+  let textReply = `已为您在 ${entry.name}（${entry.floor}）预约成功：\n📅 今日 ${timeSlot}\n👤 专属 SA：${saName}\n🔖 预约凭证：${reservationId}\n\n同时为您预留车位？`;
 
   let quickReplies = ["帮我预留车位", "联系专属SA"];
   let coupons: CouponCard[] | undefined;
@@ -475,7 +475,7 @@ function createConfirmation(
 export const appointmentSkill: Skill = {
   name: "appointment",
   intentDescription:
-    "用户想要预约奢侈品品牌专柜档期、查询可预约时段、查询预约状态等品牌预约场景",
+    "用户想要预约品牌专柜档期、查询可预约时段、查询预约状态等品牌预约场景",
   match: () => true,
   handle: (ctx) => {
     const { text, userProfile, appointmentInfo } = ctx;
@@ -485,7 +485,7 @@ export const appointmentSkill: Skill = {
       const entry = matchBrand(text);
       const brandName = entry?.name ?? "品牌";
       return {
-        text: `李先生，${brandName}的专属 SA 预约需开通 SKP 会员。钻卡及以上会员可享品牌优先预约权与新品优先预览权。是否需要为您办理入会？`,
+        text: `${brandName}的品牌预约需开通 DTX 会员。会员可享优先预约权。是否需要为您办理入会？`,
         quickReplies: ["我想入会", "了解会员权益", "稍后再说"],
       };
     }

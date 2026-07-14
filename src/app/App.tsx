@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Bubble } from "./components/chat/Bubble";
+import { CatMascot } from "./components/CatMascot";
 import { INITIAL_MESSAGES } from "./data/initial-messages";
 import { FEATURE_ENTRIES } from "./data/feature-entries";
 import { route } from "./agent";
 import { formatTime } from "./utils/time";
 import { ParkingPage } from "./pages/ParkingPage";
 import { CouponPage } from "./pages/CouponPage";
-import { SkpActivityPage } from "./pages/SkpActivityPage";
+import { DtxActivityPage } from "./pages/DtxActivityPage";
 import { WarmServicePage } from "./pages/WarmServicePage";
 import { RentalPage } from "./pages/RentalPage";
 import { MembershipPage } from "./pages/MembershipPage";
@@ -23,9 +24,27 @@ export default function App() {
   const [queueInfo, setQueueInfo] = useState<QueueInfo | null>(null);
   const [appointmentInfo, setAppointmentInfo] = useState<AppointmentInfo | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>(SIMULATED_USER_PROFILE);
-  const [currentPage, setCurrentPage] = useState<"home" | "parking" | "coupon" | "skp-activity" | "warm-service" | "rental" | "membership">("home");
+  const [currentPage, setCurrentPage] = useState<"home" | "parking" | "coupon" | "activity" | "warm-service" | "rental" | "membership">("home");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [frameScale, setFrameScale] = useState(1);
   const abortRef = useRef<AbortController | null>(null);
+
+  // 手机框按视口等比缩放,保证任何屏幕都能完整展示(留 32px 四周余量 + 阴影空间)
+  const VIEWPORT_W = 390;
+  const VIEWPORT_H = 844;
+  useEffect(() => {
+    const compute = () => {
+      const s = Math.min(
+        (window.innerWidth - 32) / VIEWPORT_W,
+        (window.innerHeight - 32) / VIEWPORT_H,
+        1,
+      );
+      setFrameScale(Math.max(0.4, Math.min(s, 1)));
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -153,25 +172,39 @@ export default function App() {
       }
 
       // 6. Finalize the message with full text, cards, quickReplies
-      setMessages((p) =>
-        p.map((m) =>
+      setMessages((p) => {
+        const finalized = p.map((m) =>
           m.id === agentMsgId
             ? {
                 ...m,
                 text: response.text,
                 quickReplies: response.quickReplies,
                 card: response.card,
+                membershipAuthorizationCard: response.membershipAuthorizationCard,
+                newMemberOfferCard: response.newMemberOfferCard,
                 parkingCard: response.parkingCard,
+                parkingShoppingGuideCard: response.parkingShoppingGuideCard,
+                activityIntroCard: response.activityIntroCard,
+                productIntroCard: response.productIntroCard,
                 reservationCard: response.reservationCard,
                 coupons: response.coupons,
                 queueCard: response.queueCard,
                 brandCards: response.brandCards,
                 appointmentCard: response.appointmentCard,
+                checkInCard: response.checkInCard,
                 streaming: false,
               }
             : m,
-        ),
-      );
+        );
+        const followUps: Message[] = (response.followUpMessages ?? []).map((message, index) => ({
+          ...message,
+          id: `${agentMsgId}-follow-up-${index}`,
+          role: "agent",
+          time: formatTime(),
+          streaming: false,
+        }));
+        return [...finalized, ...followUps];
+      });
     } catch (error) {
       console.error("Send failed:", error);
       // On error, finalize the placeholder with a fallback message
@@ -196,24 +229,12 @@ export default function App() {
   }
 
   function navigateTo(feature: string) {
-    if (feature === "停车缴费") {
-      setCurrentPage("parking");
-      return;
-    }
-    if (feature === "品牌代金券") {
+    if (feature === "领券中心") {
       setCurrentPage("coupon");
       return;
     }
-    if (feature === "SKP活动") {
-      setCurrentPage("skp-activity");
-      return;
-    }
-    if (feature === "暖心服务") {
-      setCurrentPage("warm-service");
-      return;
-    }
-    if (feature === "租赁服务") {
-      setCurrentPage("rental");
+    if (feature === "活动中心") {
+      setCurrentPage("activity");
       return;
     }
     if (feature === "会员中心") {
@@ -229,18 +250,27 @@ export default function App() {
   }
 
   return (
-    <div className="size-full flex items-center justify-center" style={{ background: "#D8D2C8" }}>
+    <div className="size-full flex items-center justify-center overflow-hidden" style={{ background: "#D9D4C8" }}>
       <div
-        className="relative flex flex-col overflow-hidden"
         style={{
-          width: 390,
-          height: 844,
-          background: "#F5F2ED",
-          fontFamily: "'DM Sans', sans-serif",
-          color: "#1A1713",
-          borderRadius: 44,
-          boxShadow: "0 40px 120px rgba(0,0,0,0.45), 0 0 0 1px rgba(184,146,74,0.18)",
+          width: VIEWPORT_W * frameScale,
+          height: VIEWPORT_H * frameScale,
+          flexShrink: 0,
         }}
+      >
+        <div
+          className="relative flex flex-col overflow-hidden"
+          style={{
+            width: VIEWPORT_W,
+            height: VIEWPORT_H,
+            background: "#FEF3EB",
+            fontFamily: "'DM Sans', sans-serif",
+            color: "#20201C",
+            borderRadius: 44,
+            boxShadow: "0 40px 120px rgba(0,0,0,0.45), 0 0 0 1px rgba(240,176,64,0.18)",
+            transform: `scale(${frameScale})`,
+            transformOrigin: "top left",
+          }}
       >
         {currentPage === "parking" ? (
           <ParkingPage
@@ -249,8 +279,8 @@ export default function App() {
             onRecordParking={(info) => setParkingInfo(info)}
             onRedeemPoints={handleParkingRedeem}
           />
-        ) : currentPage === "skp-activity" ? (
-          <SkpActivityPage onBack={() => setCurrentPage("home")} />
+        ) : currentPage === "activity" ? (
+          <DtxActivityPage onBack={() => setCurrentPage("home")} />
         ) : currentPage === "warm-service" ? (
           <WarmServicePage onBack={() => setCurrentPage("home")} />
         ) : currentPage === "rental" ? (
@@ -262,22 +292,22 @@ export default function App() {
         ) : (
         <>
         <div className="flex-shrink-0 flex items-center justify-between px-5 pt-4 pb-3 relative z-20">
-          <button className="w-8 h-8 flex items-center justify-center text-[#8C8278] text-lg">‹</button>
+          <button className="w-8 h-8 flex items-center justify-center text-[#A89D8A] text-lg">‹</button>
           <div className="flex items-center gap-2">
-            <span className="text-[14px] tracking-[0.18em] text-[#1A1713]" style={{ fontFamily: "'Cormorant', serif" }}>
-              DT-X 私享管家
+            <span className="text-[14px] tracking-[0.14em] text-[#20201C]" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>
+              DTX专享管家
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button className="w-8 h-8 flex items-center justify-center text-[#8C8278] text-sm">⊙</button>
-            <button className="w-8 h-8 flex items-center justify-center text-[#8C8278] text-sm">···</button>
+            <button className="w-8 h-8 flex items-center justify-center text-[#A89D8A] text-sm">⊙</button>
+            <button className="w-8 h-8 flex items-center justify-center text-[#A89D8A] text-sm">···</button>
           </div>
         </div>
 
         <div className="flex-shrink-0 flex items-center justify-center gap-1.5 pb-2 relative z-20">
-          <div className="h-px w-12" style={{ background: "linear-gradient(90deg, transparent, #B8924A30)" }} />
-          <p className="text-[10px] tracking-[0.12em] text-[#8C8278]">下拉查看历史对话</p>
-          <div className="h-px w-12" style={{ background: "linear-gradient(90deg, #B8924A30, transparent)" }} />
+          <div className="h-px w-12" style={{ background: "linear-gradient(90deg, transparent, #F0B04030)" }} />
+          <p className="text-[10px] tracking-[0.12em] text-[#A89D8A]">下拉查看历史对话</p>
+          <div className="h-px w-12" style={{ background: "linear-gradient(90deg, #F0B04030, transparent)" }} />
         </div>
 
         <div ref={chatRef} className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
@@ -285,40 +315,38 @@ export default function App() {
             className="relative w-full flex items-stretch overflow-hidden"
             style={{
               height: 172,
-              background: "linear-gradient(110deg, #F0EBE1 0%, #EDE5D6 55%, #E2D8C8 100%)",
+              background: "linear-gradient(110deg, #FFF7EC 0%, #FCEDD8 55%, #F6E0C2 100%)",
             }}
           >
-            <div className="absolute inset-0 opacity-[0.035]" style={{ backgroundImage: "repeating-linear-gradient(0deg, #8C6A2F 0px, #8C6A2F 1px, transparent 1px, transparent 18px)" }} />
+            <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "repeating-linear-gradient(0deg, #E8B470 0px, #E8B470 1px, transparent 1px, transparent 18px)" }} />
 
             <div className="relative z-10 flex flex-col justify-center pl-5 pr-2 flex-1">
-              <p className="text-[10px] tracking-[0.22em] text-[#B8924A] uppercase mb-2" style={{ letterSpacing: "0.2em" }}>
-                DT-X · 私享管家
+              <p className="text-[10px] tracking-[0.22em] text-[#F0B040] uppercase mb-2" style={{ letterSpacing: "0.2em" }}>
+                DTX · 专享管家
               </p>
-              <p className="text-[26px] leading-tight text-[#1A1713] mb-2" style={{ fontFamily: "'Cormorant', serif", fontWeight: 400 }}>
-                您好，<br />李先生
+              <p className="text-[22px] leading-tight text-[#20201C] mb-2 whitespace-nowrap" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>
+                早上好，李先生
               </p>
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#8BA888] animate-pulse" />
-                <span className="text-[10px] tracking-widest text-[#B8924A]">
-                  {userProfile.isMember ? "◆ 会员已开通" : "◇ 未开通会员"}
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF8E] animate-pulse" />
+                <span className="text-[10px] tracking-widest text-[#F0B040]">
+                  喵星人在线，随时聊天
                 </span>
               </div>
 
-              <div className="mt-3 self-start px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(184,146,74,0.3)" }}>
-                <span className="text-[9px] text-[#8C8278] tracking-wider mr-2">积分余额</span>
-                <span className="text-[12px] text-[#B8924A]" style={{ fontFamily: "'DM Mono', monospace" }}>
+              <div className="mt-3 self-start px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(240,176,64,0.3)" }}>
+                <span className="text-[9px] text-[#A89D8A] tracking-wider mr-2">积分余额</span>
+                <span className="text-[12px] text-[#F0B040]" style={{ fontFamily: "'DM Mono', monospace" }}>
                   {userProfile.isMember ? "128,400" : "未开通"}
                 </span>
               </div>
             </div>
 
-            <div className="relative flex-shrink-0" style={{ width: 196 }}>
-              <div className="absolute inset-y-0 left-0 w-16 z-10" style={{ background: "linear-gradient(to right, #EDE5D6, transparent)" }} />
-              <img
-                src="https://images.unsplash.com/photo-1774897795463-e6e4618a4997?w=300&h=400&fit=crop&crop=top&auto=format"
-                alt="SKP专属顾问"
-                className="w-full h-full object-cover"
-                style={{ filter: "saturate(0.85) contrast(1.02)", objectPosition: "left 45% top" }}
+            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 196 }}>
+              <div className="absolute inset-y-0 left-0 w-16 z-10" style={{ background: "linear-gradient(to right, #FCEDD8, transparent)" }} />
+              <CatMascot
+                className="relative z-10"
+                style={{ width: 158, height: 158 }}
               />
             </div>
           </div>
@@ -329,27 +357,27 @@ export default function App() {
                 key={feature.title}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => navigateTo(feature.title)}
-                className="flex flex-col items-center gap-2 px-2 py-3.5 text-center w-full transition-all duration-200 rounded-[8px]"
+                className="flex flex-col items-center gap-2 px-2 py-3.5 text-center w-full transition-all duration-200 rounded-[14px]"
                 style={{
-                  background: feature.accent ? "linear-gradient(135deg, #F7F0E4 0%, #F0E8D4 100%)" : "#FFFFFF",
-                  border: feature.accent ? "1px solid #B8924A40" : "1px solid rgba(184,146,74,0.14)",
-                  boxShadow: "0 1px 4px rgba(26,23,19,0.05)",
+                  background: feature.accent ? "linear-gradient(135deg, #FBF3E2 0%, #F3E6C8 100%)" : "#FFFFFF",
+                  border: feature.accent ? "1px solid #F0B04040" : "1px solid rgba(240,176,64,0.14)",
+                  boxShadow: "0 1px 4px rgba(42,37,32,0.05)",
                 }}
               >
                 <div>
-                  <p className="text-[12px] text-[#1A1713] mb-0.5" style={{ fontWeight: 500 }}>
+                  <p className="text-[12px] text-[#20201C] mb-0.5" style={{ fontWeight: 500 }}>
                     {feature.title}
                   </p>
-                  <p className="text-[9px] text-[#8C8278] leading-tight">{feature.sub}</p>
+                  <p className="text-[9px] text-[#A89D8A] leading-tight">{feature.sub}</p>
                 </div>
               </motion.button>
             ))}
           </div>
 
           <div className="flex items-center gap-3 px-5 mb-4">
-            <div className="h-px flex-1" style={{ background: "linear-gradient(90deg, transparent, #B8924A20)" }} />
-            <span className="text-[9px] tracking-[0.22em] text-[#B8924A]/50 uppercase">对话记录</span>
-            <div className="h-px flex-1" style={{ background: "linear-gradient(90deg, #B8924A20, transparent)" }} />
+            <div className="h-px flex-1" style={{ background: "linear-gradient(90deg, transparent, #F0B04020)" }} />
+            <span className="text-[9px] tracking-[0.22em] text-[#F0B040]/50 uppercase">对话记录</span>
+            <div className="h-px flex-1" style={{ background: "linear-gradient(90deg, #F0B04020, transparent)" }} />
           </div>
 
           <div className="px-4 space-y-5 pb-4">
@@ -360,21 +388,20 @@ export default function App() {
 
               {isTyping && (
                 <motion.div key="typing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex gap-2.5">
-                  <img
-                    src="https://images.unsplash.com/photo-1774897795463-e6e4618a4997?w=150&h=150&fit=facearea&facepad=2.2&auto=format"
-                    alt="顾问头像"
-                    className="flex-shrink-0 w-8 h-8 rounded-full object-cover"
-                    style={{ border: "1px solid rgba(184,146,74,0.3)" }}
+                  <CatMascot
+                    withBackground
+                    className="flex-shrink-0 w-8 h-8 rounded-full"
+                    style={{ border: "1px solid rgba(240,176,64,0.3)" }}
                   />
                   <div
                     className="px-3.5 py-3 flex items-center gap-[5px] rounded-[18px] rounded-tl-[4px]"
-                    style={{ background: "#FFFFFF", border: "1px solid rgba(184,146,74,0.12)", boxShadow: "0 1px 4px rgba(26,23,19,0.06)" }}
+                    style={{ background: "#FFFFFF", border: "1px solid rgba(240,176,64,0.12)", boxShadow: "0 1px 4px rgba(42,37,32,0.06)" }}
                   >
                     {[0, 0.18, 0.36].map((delay, i) => (
                       <motion.div
                         key={i}
                         className="w-[5px] h-[5px] rounded-full"
-                        style={{ background: "#B8924A60" }}
+                        style={{ background: "#F0B04060" }}
                         animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.15, 0.8] }}
                         transition={{ duration: 1, delay, repeat: Infinity }}
                       />
@@ -389,29 +416,29 @@ export default function App() {
           <div className="h-24" />
         </div>
 
-        <div className="absolute bottom-0 inset-x-0 z-30" style={{ background: "linear-gradient(to top, #F5F2ED 72%, rgba(245,242,237,0) 100%)", paddingTop: 20 }}>
+        <div className="absolute bottom-0 inset-x-0 z-30" style={{ background: "linear-gradient(to top, #FEF3EB 72%, rgba(254,243,235,0) 100%)", paddingTop: 20 }}>
           <div
             className="mx-4 mb-3 flex items-center gap-2.5 px-4 py-3 rounded-[24px]"
-            style={{ background: "#FFFFFF", border: "1px solid rgba(184,146,74,0.2)", boxShadow: "0 2px 12px rgba(26,23,19,0.07)" }}
+            style={{ background: "#FFFFFF", border: "1px solid rgba(240,176,64,0.2)", boxShadow: "0 2px 12px rgba(42,37,32,0.07)" }}
           >
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
               placeholder="有什么需要问我的吗～"
-              className="flex-1 bg-transparent outline-none text-[13px] text-[#1A1713] placeholder:text-[#C8BEAF]"
+              className="flex-1 bg-transparent outline-none text-[13px] text-[#20201C] placeholder:text-[#CFC3AE]"
               style={{ fontWeight: 400 }}
             />
             {input.trim() ? (
               <button
                 onClick={() => send()}
                 className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-sm transition-all duration-200 active:scale-95 rounded-full"
-                style={{ background: "#B8924A", color: "#FFFFFF" }}
+                style={{ background: "#F0B040", color: "#FFFFFF" }}
               >
                 ↑
               </button>
             ) : (
-              <button className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-[#C8BEAF] transition-colors hover:text-[#B8924A]">
+              <button className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-[#CFC3AE] transition-colors hover:text-[#F0B040]">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
@@ -424,6 +451,7 @@ export default function App() {
         </div>
         </>
         )}
+        </div>
       </div>
     </div>
   );

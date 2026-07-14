@@ -71,7 +71,7 @@ function generateQRSVG(data: string, size = 120): string {
   for (let r = 0; r < cells; r++) {
     for (let c = 0; c < cells; c++) {
       if (matrix[r][c]) {
-        svg += `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="#1A1713"/>`;
+        svg += `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="#20201C"/>`;
       }
     }
   }
@@ -98,26 +98,26 @@ export function ReservationCardBubble({ card }: { card: ReservationCard }) {
         maxWidth: 328,
         borderRadius: 18,
         background: "#FFFFFF",
-        border: "1px solid rgba(184,146,74,0.2)",
-        boxShadow: "0 8px 26px rgba(26,23,19,0.1), 0 1px 6px rgba(26,23,19,0.05)",
+        border: "1px solid rgba(240,176,64,0.2)",
+        boxShadow: "0 8px 26px rgba(42,37,32,0.1), 0 1px 6px rgba(42,37,32,0.05)",
       }}
     >
       <div
         className="absolute inset-x-0 top-0 h-[2px]"
-        style={{ background: "linear-gradient(90deg, #B8924A, #D4B978, #B8924A)" }}
+        style={{ background: "linear-gradient(90deg, #F0B040, #FFCC66, #F0B040)" }}
       />
 
       <div
         className="px-5 pt-4 pb-3.5"
         style={{
-          background: "linear-gradient(135deg, #F7F0E4 0%, #F0E8D4 100%)",
-          borderBottom: "1px solid rgba(184,146,74,0.12)",
+          background: "linear-gradient(135deg, #FFF8EE 0%, #FFF0DC 100%)",
+          borderBottom: "1px solid rgba(240,176,64,0.12)",
         }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <CarFront size={18} strokeWidth={1.8} color="#B8924A" />
-            <span className="text-[13px] tracking-wide text-[#1A1713]" style={{ fontWeight: 600 }}>
+            <CarFront size={18} strokeWidth={1.8} color="#F0B040" />
+            <span className="text-[13px] tracking-wide text-[#20201C]" style={{ fontWeight: 600 }}>
               车位预约
             </span>
           </div>
@@ -137,28 +137,28 @@ export function ReservationCardBubble({ card }: { card: ReservationCard }) {
 
       <div className="px-5 py-4.5">
         <div className="flex items-start gap-2.5 mb-3.5">
-          <span className="w-5 h-5 mt-[2px] flex items-center justify-center" style={{ color: "#B8924A" }}>
-            <MapPin size={16} strokeWidth={1.8} color="#B8924A" />
+          <span className="w-5 h-5 mt-[2px] flex items-center justify-center" style={{ color: "#F0B040" }}>
+            <MapPin size={16} strokeWidth={1.8} color="#F0B040" />
           </span>
           <div>
-            <p className="text-[10px] tracking-wide text-[#8C8278] mb-0.5">预约车位</p>
-            <p className="text-[31px] text-[#1A1713]" style={{ fontWeight: 600, fontSize: 29 }}>
+            <p className="text-[10px] tracking-wide text-[#A89D8A] mb-0.5">预约车位</p>
+            <p className="text-[31px] text-[#20201C]" style={{ fontWeight: 600, fontSize: 29 }}>
               {card.floor}层 · {card.spotId}
             </p>
           </div>
         </div>
 
         <div className="flex gap-3.5 items-stretch">
-          <div className="flex-1 px-3.5 py-3 rounded-[12px] flex flex-col justify-center" style={{ background: "#F9F6F1", border: "1px solid rgba(184,146,74,0.08)" }}>
-            <p className="text-[10px] tracking-wide text-[#8C8278] mb-1">车牌号</p>
-            <p className="text-[20px] text-[#1A1713] leading-none" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
+          <div className="flex-1 px-3.5 py-3 rounded-[12px] flex flex-col justify-center" style={{ background: "#FFFAF0", border: "1px solid rgba(240,176,64,0.08)" }}>
+            <p className="text-[10px] tracking-wide text-[#A89D8A] mb-1">车牌号</p>
+            <p className="text-[20px] text-[#20201C] leading-none" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
               {card.plateNumber}
             </p>
           </div>
 
           <div
             className="flex-shrink-0 flex flex-col items-center justify-center rounded-[12px] px-3 py-3"
-            style={{ background: "#F9F6F1", border: "1px solid rgba(184,146,74,0.08)" }}
+            style={{ background: "#FFFAF0", border: "1px solid rgba(240,176,64,0.08)" }}
           >
             <img
               src={qrUri}
@@ -167,7 +167,7 @@ export function ReservationCardBubble({ card }: { card: ReservationCard }) {
               height={68}
               style={{ borderRadius: 4, imageRendering: "pixelated" }}
             />
-            <p className="text-[9px] tracking-wide text-[#8C8278] mt-1.5">扫码入场</p>
+            <p className="text-[9px] tracking-wide text-[#A89D8A] mt-1.5">扫码入场</p>
           </div>
         </div>
 

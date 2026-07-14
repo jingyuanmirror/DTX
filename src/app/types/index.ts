@@ -8,6 +8,29 @@ export interface MemberCard {
   benefits: string[];
 }
 
+export interface MembershipAuthorizationCard {
+  type: "membership-authorization-card";
+  title: string;
+  subtitle: string;
+  benefits: Array<{
+    title: string;
+    value: string;
+    note: string;
+  }>;
+  authorizedFields: string[];
+}
+
+export interface NewMemberOfferCard {
+  type: "new-member-offer-card";
+  amount: number;
+  title: string;
+  store: string;
+  floor: string;
+  distance: string;
+  categories: string[];
+  validLabel: string;
+}
+
 export interface ParkingCard {
   type: "parking-card";
   location: string;
@@ -15,6 +38,57 @@ export interface ParkingCard {
   duration: string;
   fee: string;
   feeRate: string;
+  membershipOffer?: {
+    benefit: string;
+    saving: string;
+  };
+}
+
+export interface ParkingShoppingGuideCard {
+  type: "parking-shopping-guide-card";
+  title: string;
+  subtitle: string;
+  stops: Array<{
+    floor: string;
+    title: string;
+    recommendation: string;
+    tag: string;
+    action: string;
+  }>;
+  coupon: {
+    brand: string;
+    discount: string;
+    title: string;
+  };
+}
+
+export interface ActivityIntroCard {
+  type: "activity-intro-card";
+  eyebrow: string;
+  title: string;
+  slogan: string;
+  dateLabel: string;
+  benefits: Array<{
+    title: string;
+    note: string;
+  }>;
+  actionLabel: string;
+}
+
+export interface ProductIntroCard {
+  type: "product-intro-card";
+  brand: string;
+  name: string;
+  image: string;
+  floor: string;
+  description: string;
+  sellingPoints: string[];
+  suitableFor: string;
+  recommendation: string;
+  regularPrice: number;
+  activityPrice: number;
+  pointsLabel: string;
+  pointsActivity: string;
 }
 
 export interface CouponCard {
@@ -69,6 +143,28 @@ export interface AppointmentCard {
   statusLabel: string;
 }
 
+export interface CheckInSpotItem {
+  name: string;
+  floor: string;
+  category: string;
+  desc: string;
+}
+
+export interface CheckInCard {
+  type: "check-in-card";
+  spotName: string;
+  status: "success";
+  statusLabel: string;
+  prize: {
+    name: string;
+    price: number;
+    originalPrice: number;
+    note: string;
+  };
+  recommendations: CheckInSpotItem[];
+  couponHint: string;
+}
+
 export interface Message {
   id: string;
   role: "agent" | "user";
@@ -76,12 +172,18 @@ export interface Message {
   time: string;
   quickReplies?: string[];
   card?: MemberCard;
+  membershipAuthorizationCard?: MembershipAuthorizationCard;
+  newMemberOfferCard?: NewMemberOfferCard;
   parkingCard?: ParkingCard;
+  parkingShoppingGuideCard?: ParkingShoppingGuideCard;
+  activityIntroCard?: ActivityIntroCard;
+  productIntroCard?: ProductIntroCard;
   coupons?: CouponCard[];
   queueCard?: QueueCard;
   brandCards?: BrandCard[];
   reservationCard?: ReservationCard;
   appointmentCard?: AppointmentCard;
+  checkInCard?: CheckInCard;
   streaming?: boolean;
 }
 
@@ -136,6 +238,7 @@ export interface UserProfile {
   memberTier?: "silver" | "diamond" | "black";
   _justOnboarded?: boolean;
   _enrollmentForm?: EnrollmentForm;
+  _membershipAuthorizationPending?: boolean;
 }
 
 export interface FeatureEntry {

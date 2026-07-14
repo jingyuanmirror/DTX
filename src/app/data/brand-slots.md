@@ -1,8 +1,8 @@
-# SKP 品牌预约档期规则
+# DTX 品牌预约档期规则
 
 > 版本：v1.0
 > 更新时间：2026-06-29
-> 适用对象：AI 私享管家 appointment skill
+> 适用对象：AI 智能管家 appointment skill
 
 ## 通用规则
 

@@ -5,7 +5,20 @@ import { chatCompletion } from "../../llm/client";
 import type { ChatMessage } from "../../llm/types";
 
 const MEMBERSHIP_INQUIRY = /有会员吗|会员吗|会员服务|会员制度|会员权益|会员中心|怎么入会|如何入会|怎么办会员|会员|入会/;
-const MEMBERSHIP_ENROLL_INTENT = /我想入会|我要入会|帮我入会|想入会|要入会|办会员|办理会员|开会员|加入会员|申请会员|现在入会|给我入会|入会吧/;
+const MEMBERSHIP_ENROLL_INTENT = /我想(?:要)?(?:办理|申请|加入|开通|注册)?(?:入会|会员)|我要(?:办理|申请|加入|开通|注册)?(?:入会|会员)|帮我(?:办|办理|申请|加入|开通|注册)?(?:入会|会员)|给我(?:办|办理|申请|加入|开通|注册)?(?:入会|会员)|(?:办|办理|申请|加入|开通|注册)(?:一下)?(?:入会|会员)|(?:想|要|现在|马上|直接)(?:入会|加入会员)|成为(?:DTX)?会员|入会吧/;
+const MEMBERSHIP_AUTH_CONFIRM = /同意授权并加入会员|同意授权|确认授权/;
+const MEMBERSHIP_AUTH_CANCEL = /取消授权|不同意|暂不入会/;
+
+const AUTHORIZATION_CARD = {
+  type: "membership-authorization-card" as const,
+  title: "DTX邀您加入会员",
+  subtitle: "确认授权后即可完成入会",
+  benefits: [
+    { title: "DTX精品超市新人礼", value: "50元无门槛券", note: "入会后自动发放至卡包" },
+    { title: "会员专属停车礼遇", value: "2小时免费停车", note: "入会当日可用" },
+  ],
+  authorizedFields: ["姓名", "手机号", "生日", "身份信息"],
+};
 
 /** Use LLM to extract enrollment fields from free-form user text */
 async function extractFormFieldsWithLLM(text: string, existing: EnrollmentForm): Promise<EnrollmentForm> {
@@ -103,8 +116,8 @@ function missingFields(form: EnrollmentForm): string[] {
 }
 
 function getTierLabel(memberTier: "silver" | "diamond" | "black" | undefined): string {
-  if (memberTier === "diamond") return "钻石会员";
-  if (memberTier === "black") return "黑钻会员";
+  if (memberTier === "diamond") return "金卡会员";
+  if (memberTier === "black") return "黑卡会员";
   return "银卡会员";
 }
 
@@ -126,6 +139,59 @@ export const membershipSkill: Skill = {
   handle: async ({ text, userProfile }) => {
     const preference = detectPreference(text);
     const form = userProfile._enrollmentForm;
+
+    // ── 0. 入会授权确认 ──
+    if (userProfile._membershipAuthorizationPending && !userProfile.isMember) {
+      if (MEMBERSHIP_AUTH_CANCEL.test(text)) {
+        return {
+          text: "好的，已取消本次授权。您可以随时再找我办理入会。",
+          quickReplies: ["了解会员权益", "稍后入会"],
+          sideEffects: {
+            setUserProfile: () => ({ ...userProfile, _membershipAuthorizationPending: false }),
+          },
+        };
+      }
+
+      if (MEMBERSHIP_AUTH_CONFIRM.test(text)) {
+        return {
+          text: "李先生，欢迎加入DTX。您的50元新人礼和2小时停车权益已经生效。正好可以去B1精品超市逛逛，购买鲜花、水果等商品可直接使用新人券。",
+          quickReplies: ["使用新人券", "会员权益"],
+          card: {
+            type: "member-card",
+            tier: "银卡会员",
+            tierIcon: "◇",
+            name: "李先生",
+            cardNo: "DTX 2026 **** 88",
+            points: "0",
+            benefits: ["积分累计享双倍", "专属停车优惠", "生日礼遇"],
+          },
+          newMemberOfferCard: {
+            type: "new-member-offer-card",
+            amount: 50,
+            title: "DTX精品超市新人券",
+            store: "DTX精品超市",
+            floor: "B1-01",
+            distance: "3分钟",
+            categories: ["进口鲜花", "有机水果"],
+            validLabel: "今日可用",
+          },
+          sideEffects: {
+            setUserProfile: () => ({
+              ...userProfile,
+              isMember: true,
+              memberTier: "silver",
+              _justOnboarded: true,
+              _membershipAuthorizationPending: false,
+            }),
+          },
+        };
+      }
+
+      return {
+        text: "加入会员前，请先确认个人信息授权。",
+        membershipAuthorizationCard: AUTHORIZATION_CARD,
+      };
+    }
 
     // ── 1. 偏好收集（入会后）──
     if (preference.hasPreference && userProfile._justOnboarded) {
@@ -196,14 +262,14 @@ export const membershipSkill: Skill = {
       if (stillMissing.length === 0) {
         const displayName = updatedForm.name ?? "李先生";
         return {
-          text: `感谢您提供完整信息，${displayName}先生。入会手续已办理完成，您现在是SKP银卡会员。\n\n您可以点击会员中心查看会员信息，也可以随时向我咨询。\n\n另外，为了更好地服务您，您可以把偏好告诉我，比如您喜欢的品类或近期关注的品牌，有相关信息我会第一时间通知您。`,
-          quickReplies: ["高奢腕表皮具", "美妆护肤", "Hermès", "Chanel"],
+          text: `感谢您提供完整信息，${displayName}先生。入会手续已办理完成，您现在是DTX银卡会员。\n\n您可以点击会员中心查看会员信息，也可以随时向我咨询。\n\n另外，为了更好地服务您，您可以把偏好告诉我，比如您喜欢的品类或近期关注的品牌，有相关信息我会第一时间通知您。`,
+          quickReplies: ["美妆护肤", "生鲜美食", "亲子娱乐", "今日优惠"],
           card: {
             type: "member-card",
             tier: "银卡会员",
             tierIcon: "◇",
             name: displayName,
-            cardNo: "SKP 2026 **** 88",
+            cardNo: "DTX 2026 **** 88",
             points: "0",
             benefits: ["积分累计享双倍", "专属停车优惠", "生日礼遇"],
           },
@@ -249,12 +315,12 @@ export const membershipSkill: Skill = {
       if (userProfile.isMember) {
         const tierLabel = getTierLabel(userProfile.memberTier);
         return {
-          text: `是的，商场提供会员服务。李先生，您已经是我们的${tierLabel}了，可享积分累计、专属停车礼遇和生日礼遇等权益。`,
+          text: `是的，商场提供会员服务。您已经是我们的${tierLabel}了，可享积分累计、停车优惠和生日礼遇等权益。`,
           quickReplies: ["查看会员权益", "升级条件", "查询停车状态"],
         };
       }
       return {
-        text: "是的，商场提供会员服务。当前会员可享积分累计、专属停车礼遇、生日礼遇等权益。李先生，如您愿意，我可以立即为您办理入会。",
+        text: "是的，商场提供会员服务。当前会员可享积分累计、停车优惠、生日礼遇等权益。如您愿意，我可以立即为您办理入会。",
         quickReplies: ["我想入会", "了解会员权益", "入会后做什么"],
       };
     }
@@ -262,56 +328,20 @@ export const membershipSkill: Skill = {
     // ── 5. 已是会员的通用回复 ──
     if (userProfile.isMember) {
       return {
-        text: "李先生，您当前会员状态正常。SKP会员体系包含银卡、钻石、黑钻等级，可享积分累计、专属停车礼遇、生日礼遇等权益。若您需要，我也可以为您进一步说明各等级差异。",
+        text: "您当前会员状态正常。DTX会员体系包含银卡、金卡、黑卡等级，可享积分累计、停车优惠、生日礼遇等权益。若您需要，我也可以为您进一步说明各等级差异。",
         quickReplies: ["查看会员权益", "升级条件", "查询停车状态"],
       };
     }
 
-    // ── 6. 明确表达入会意愿 —— 开启信息收集 ──
+    // ── 6. 明确表达入会意愿 —— 请求个人信息授权 ──
     if (MEMBERSHIP_ENROLL_INTENT.test(text)) {
-      const initialForm = await extractFormFieldsWithLLM(text, {});
-      const stillMissing = missingFields(initialForm);
-
-      if (stillMissing.length === 0) {
-        const displayName = initialForm.name ?? "李先生";
-        return {
-          text: `感谢您提供完整信息，${displayName}先生。入会手续已办理完成，您现在是SKP银卡会员。\n\n您可以点击会员中心查看会员信息，也可以随时向我咨询。\n\n另外，为了更好地服务您，您可以把偏好告诉我，比如您喜欢的品类或近期关注的品牌，有相关信息我会第一时间通知您。`,
-          quickReplies: ["高奢腕表皮具", "美妆护肤", "Hermès", "Chanel"],
-          card: {
-            type: "member-card",
-            tier: "银卡会员",
-            tierIcon: "◇",
-            name: displayName,
-            cardNo: "SKP 2026 **** 88",
-            points: "0",
-            benefits: ["积分累计享双倍", "专属停车优惠", "生日礼遇"],
-          },
-          sideEffects: {
-            setUserProfile: () => ({
-              categories: userProfile.categories,
-              brands: userProfile.brands,
-              items: userProfile.items,
-              isMember: true,
-              memberTier: "silver",
-              _justOnboarded: true,
-              _enrollmentForm: initialForm,
-            }),
-          },
-        };
-      }
-
-      let prompt = ENROLLMENT_INTRO;
-      if (stillMissing.length < 5) {
-        prompt = `已收到部分信息，还需要补充：${stillMissing.join("、")}。`;
-      }
-
       return {
-        text: prompt,
-        quickReplies: [],
+        text: "当然可以。入会前，请您确认个人信息授权，授权后即可完成注册并领取新人礼遇。",
+        membershipAuthorizationCard: AUTHORIZATION_CARD,
         sideEffects: {
           setUserProfile: () => ({
             ...userProfile,
-            _enrollmentForm: initialForm,
+            _membershipAuthorizationPending: true,
           }),
         },
       };
@@ -320,12 +350,12 @@ export const membershipSkill: Skill = {
     // ── 7. 非会员，被 LLM 路由来的确认消息（上下文与入会相关）──
     if (!userProfile.isMember) {
       return {
-        text: ENROLLMENT_INTRO,
-        quickReplies: [],
+        text: "入会前，请您先确认个人信息授权。",
+        membershipAuthorizationCard: AUTHORIZATION_CARD,
         sideEffects: {
           setUserProfile: () => ({
             ...userProfile,
-            _enrollmentForm: {},
+            _membershipAuthorizationPending: true,
           }),
         },
       };
@@ -333,7 +363,7 @@ export const membershipSkill: Skill = {
 
     // ── 8. 兜底 ──
     return {
-      text: "是的，商场提供会员服务。当前会员可享积分累计、专属停车礼遇、生日礼遇等权益。李先生，如您愿意，我可以立即为您办理入会。",
+      text: "是的，商场提供会员服务。当前会员可享积分累计、停车优惠、生日礼遇等权益。如您愿意，我可以立即为您办理入会。",
       quickReplies: ["我想入会", "了解会员权益", "入会后做什么"],
     };
   },

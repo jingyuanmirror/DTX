@@ -151,8 +151,8 @@ function detectBrandFromContext(text: string, recentHistory: ChatMessage[]): str
 
 // ── Gift / recommendation detection ──────────────────────────────────
 
-const GIFT_KEYWORDS = ["送礼", "送人", "礼物", "推荐个", "送老婆", "送太太", "送长辈", "送朋友", "商务送礼", "送伴侣"];
-const RECOMMEND_KEYWORDS = ["推荐品牌", "推荐个品牌", "有什么品牌", "适合送", "帮我推荐", "推荐一下"];
+const GIFT_KEYWORDS = ["送礼", "送人", "礼物", "推荐个", "送老婆", "送太太", "送长辈", "送朋友", "商务送礼", "送伴侣", "送点", "送点什么", "520", "情人", "情人节", "纪念日", "送女友", "送男友", "送闺蜜"];
+const RECOMMEND_KEYWORDS = ["推荐品牌", "推荐个品牌", "有什么品牌", "适合送", "帮我推荐", "推荐一下", "新鲜好物", "好物推荐", "有什么好物", "推荐好物", "生鲜"];
 
 function isGiftOrRecommendQuery(text: string): boolean {
   return [...GIFT_KEYWORDS, ...RECOMMEND_KEYWORDS].some((kw) => text.includes(kw));
@@ -186,9 +186,9 @@ async function answerWithLLM(userQuestion: string, snippet: string): Promise<str
     {
       role: "system",
       content:
-        "你是SKP商场专属私享管家。你只能基于提供的'品牌知识片段'作答，严禁杜撰。\n"
+        "你是DTX综合商圈智能管家。你只能基于提供的'品牌知识片段'作答，严禁杜撰。\n"
         + "要求：\n"
-        + "1) 语气自然、专业、有温度，称呼用户为'李先生'。\n"
+        + "1) 语气自然、轻松热情、有温度，称呼用户为'先生'或'女士'。\n"
         + "2) 内容必须与知识片段一致，不可新增事实。\n"
         + "3) 若用户问新品/到货，列出知识片段中的当季亮点信息。\n"
         + "4) 若知识片段无法覆盖用户问题，直接回复：'抱歉，目前没有该品牌的详细信息，正在帮您联系商场人工台核实。'\n"
@@ -220,24 +220,24 @@ async function recommendWithLLM(
     {
       role: "system",
       content:
-        "你是SKP商场专属私享管家，帮助用户挑选礼物或推荐品牌。\n"
+        "你是DTX综合商圈智能管家，根据用户需求推荐好物或挑选礼物。\n"
         + "要求：\n"
-        + "1) 语气自然、专业、有温度，称呼用户为'李先生'。\n"
-        + "2) 基于'礼品推荐参考'和'用户偏好'给出 2-3 个推荐，包含品牌、楼层、具体礼品建议和理由。\n"
-        + "3) 优先考虑用户已有偏好的品牌。\n"
-        + "4) 每个推荐格式：序号. 品牌（楼层）— 礼品内容，简要理由\n"
-        + "5) 末尾加上：'如需我为您安排试看或预约 SA，随时告诉我。'\n"
+        + "1) 语气自然、轻松热情、有温度，称呼用户为'先生'或'女士'。\n"
+        + "2) 根据用户问题判断场景：问好物/生鲜则推荐当季好物；问送礼（520、情人节、生日、纪念日、日常）则挑选礼物。基于'推荐参考'和'用户偏好'给出 3-5 个推荐，覆盖轻奢、生活方式、餐饮体验等不同预算档次。\n"
+        + "3) 优先考虑用户已有偏好的品牌，但也给出日常实惠的选项。\n"
+        + "4) 每个推荐格式：序号. 品牌/商品（楼层）— 内容，简要理由\n"
+        + "5) 末尾加上：'如需预约或到店体验，随时告诉我。'\n"
         + "6) 输出仅回答正文。",
     },
     {
       role: "user",
-      content: `用户问题：${userQuestion}\n用户偏好：${preferenceStr}\n\n礼品推荐参考：\n${giftSection}`,
+      content: `用户问题：${userQuestion}\n用户偏好：${preferenceStr}\n\n推荐参考：\n${giftSection}`,
     },
   ];
 
   const result = await chatCompletion(messages, [], { onToken: () => {} });
   const text = result.choices[0]?.message?.content?.trim();
-  return text ?? "李先生，请告诉我更多关于收礼人的信息，我来为您精准推荐。";
+  return text ?? "请告诉我更多关于您需求的信息，我来为您精准推荐。";
 }
 
 // ── Intent classification for store-consult ──────────────────────────
@@ -299,7 +299,7 @@ async function isStoreConsultQuery(text: string, recentHistory?: ChatMessage[]):
 export const storeConsultSkill: Skill = {
   name: "store-consult",
   intentDescription:
-    "处理品牌店铺在线咨询（品牌信息、楼层位置、当季新品到货、礼品推荐、品牌推荐、联系SA导购等来店前咨询场景）",
+    "处理品牌/好物在线咨询（品牌信息、楼层位置、当季新品到货、生鲜好物推荐、礼品推荐、品牌推荐、联系SA导购等来店前咨询场景）",
   match: () => true,
   handle: async ({ text, userProfile }) => {
     const isConsult = await isStoreConsultQuery(text, recentChatHistory);
@@ -332,7 +332,7 @@ export const storeConsultSkill: Skill = {
       const hasAnyCards = brandCards && brandCards.length > 0;
 
       const memberHint = !userProfile.isMember
-        ? "\n\n另外提醒您，SKP 黑卡会员可享品牌新品优先预览权与专属 SA 预约通道，是否需要为您办理入会？"
+        ? "\n\n另外提醒您，DTX 会员可享消费积分、停车优惠及部分新品到货提醒，是否需要为您办理入会？"
         : "";
 
       return {
@@ -359,7 +359,7 @@ export const storeConsultSkill: Skill = {
       const showCard = shouldShowBrandCard(matchedBrand.name);
 
       const memberHint = !userProfile.isMember
-        ? `\n\n另外提醒您，SKP 黑卡会员可享品牌新品优先预览权与专属 SA 预约通道，是否需要为您办理入会？`
+        ? `\n\n另外提醒您，DTX 会员可享消费积分、停车优惠及部分新品到货提醒，是否需要为您办理入会？`
         : "";
 
       return {
@@ -396,11 +396,11 @@ export const storeConsultSkill: Skill = {
           .map((e) => buildBrandCard(e));
 
         const memberHint = !userProfile.isMember
-          ? "\n\n另外提醒您，SKP 黑卡会员可享品牌新品优先预览权与专属 SA 预约通道，是否需要为您办理入会？"
+          ? "\n\n另外提醒您，DTX 会员可享消费积分、停车优惠及部分新品到货提醒，是否需要为您办理入会？"
           : "";
 
         return {
-          text: `李先生，关于${matchedItems.join("、")}，为您推荐以下品牌：\n\n${brandList}\n\n如需我为您安排试看或预约 SA，随时告诉我。${memberHint}`,
+          text: `关于${matchedItems.join("、")}，为您推荐以下品牌：\n\n${brandList}\n\n如需我为您安排试看或预约 SA，随时告诉我。${memberHint}`,
           quickReplies: !userProfile.isMember
             ? ["我想入会", `帮我预约${relevantBrands[0].name}`, "稍后再说"]
             : [`帮我预约${relevantBrands[0].name}`, "帮我预留车位", "联系专属SA"],
@@ -416,7 +416,7 @@ export const storeConsultSkill: Skill = {
       const floorInfo = brand ? `（${brand.floor}）` : "";
 
       return {
-        text: `李先生，${brandName ? `${brandName}${floorInfo}的` : "品牌"}专属 SA 可以通过预约档期为您安排。${
+        text: `${brandName ? `${brandName}${floorInfo}的` : "品牌"}专属 SA 可以通过预约档期为您安排。${
           brand?.saBooking ? `\n\n预约说明：${brand.saBooking}` : ""
         }\n\n是否需要我帮您${brandName ? `在${brandName}` : ""}预约一个档期？`,
         quickReplies: brandName
@@ -428,8 +428,8 @@ export const storeConsultSkill: Skill = {
 
     // ── Generic brand query fallback (LLM handles) ──────────────────
     return {
-      text: "李先生，请问您想了解哪个品牌的信息？我可以帮您查询品牌位置、当季新品和预约安排。",
-      quickReplies: ["Chanel在几楼", "Hermès有什么新品", "推荐送礼品牌"],
+      text: "请问您想了解哪个品牌或好物的信息？我可以帮您查询位置、当季新品、预约安排或新鲜好物推荐。",
+      quickReplies: ["今天吃什么", "新鲜好物", "520送点什么"],
     };
   },
 };

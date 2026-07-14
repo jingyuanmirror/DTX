@@ -1,12 +1,17 @@
 import type { AgentSideEffects, SkillContext } from "../../agent/types";
-import type { AppointmentCard, BrandCard, MemberCard, ParkingCard, CouponCard, QueueCard, ReservationCard } from "../../types";
+import type { ActivityIntroCard, AppointmentCard, BrandCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingShoppingGuideCard, ProductIntroCard, CouponCard, QueueCard, ReservationCard } from "../../types";
 import { skills } from "../../skills";
 
 export interface ToolResult {
   data: unknown;
   sideEffects?: AgentSideEffects;
   card?: MemberCard;
+  membershipAuthorizationCard?: MembershipAuthorizationCard;
+  newMemberOfferCard?: NewMemberOfferCard;
   parkingCard?: ParkingCard;
+  parkingShoppingGuideCard?: ParkingShoppingGuideCard;
+  activityIntroCard?: ActivityIntroCard;
+  productIntroCard?: ProductIntroCard;
   reservationCard?: ReservationCard;
   coupons?: CouponCard[];
   queueCard?: QueueCard;
@@ -50,7 +55,12 @@ export function executeTool(
       },
       sideEffects: response.sideEffects,
       card: response.card,
+      membershipAuthorizationCard: response.membershipAuthorizationCard,
+      newMemberOfferCard: response.newMemberOfferCard,
       parkingCard: response.parkingCard,
+      parkingShoppingGuideCard: response.parkingShoppingGuideCard,
+      activityIntroCard: response.activityIntroCard,
+      productIntroCard: response.productIntroCard,
       reservationCard: response.reservationCard,
       coupons: response.coupons,
       queueCard: response.queueCard,

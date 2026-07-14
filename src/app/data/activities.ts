@@ -1,5 +1,5 @@
 /**
- * SKP 商场活动数据源
+ * DTX 商场活动数据源
  *
  * 每条活动带 categories / brands / items 标签，
  * 用于和 UserProfile 中的偏好做匹配，实现个性化推荐。
@@ -57,7 +57,7 @@ export const ACTIVITIES: Activity[] = [
     id: "act-004",
     title: "Chanel 高珠私享预览",
     summary:
-      "Chanel 高级珠宝 COCO CRUSH 系列新季预览，仅限黑钻会员预约，享专属下午茶礼遇。",
+      "Chanel 高级珠宝 COCO CRUSH 系列新季预览，仅限黑卡会员预约，享专属下午茶礼遇。",
     floor: "1F-D01",
     dateRange: "7/1 – 7/7",
     categories: ["珠宝首饰"],
@@ -66,9 +66,9 @@ export const ACTIVITIES: Activity[] = [
   },
   {
     id: "act-005",
-    title: "PORSCHE x SKP 限时联名展",
+    title: "PORSCHE x DTX 限时联名展",
     summary:
-      "Porsche 911 Dakar 联名艺术装置，到场可获限量车模一枚；试驾预约即赠 SKP 500 积分。",
+      "Porsche 911 Dakar 联名艺术装置，到场可获限量车模一枚；试驾预约即赠 DTX 500 积分。",
     floor: "B1-中庭",
     dateRange: "6/25 – 7/15",
     categories: [],
@@ -99,12 +99,34 @@ export const ACTIVITIES: Activity[] = [
   },
   {
     id: "act-008",
-    title: "SKP-S 先锋艺术装置展",
+    title: "DTX-S 先锋艺术装置展",
     summary:
-      "数字艺术团队 teamLab 全新沉浸装置「无界·宇宙」，SKP-S 四楼全景呈现，会员免费观展。",
-    floor: "4F-SKP-S",
+      "数字艺术团队 teamLab 全新沉浸装置「无界·宇宙」，DTX-S 四楼全景呈现，会员免费观展。",
+    floor: "4F-DTX-S",
     dateRange: "6/20 – 8/31",
     categories: ["先锋设计师"],
+    brands: [],
+    items: [],
+  },
+  {
+    id: "act-009",
+    title: "DTX 周末鲜食市集",
+    summary:
+      "B1 精品超市户外区，每周六日新鲜直供：有机蔬菜、进口水果、现烤面包、手冲咖啡。会员享 9 折，更有满赠好礼。",
+    floor: "B1-户外区",
+    dateRange: "每周六日",
+    categories: ["生鲜美食"],
+    brands: ["DTX精品超市"],
+    items: ["生鲜"],
+  },
+  {
+    id: "act-010",
+    title: "亲子烘焙工坊",
+    summary:
+      "4F 乐高体验店旁，每周末亲子 DIY 烘焙，适合 3-10 岁儿童，会员家庭积分可抵扣活动费。名额有限需提前报名。",
+    floor: "4F-C03",
+    dateRange: "7/1 – 8/31",
+    categories: ["亲子娱乐"],
     brands: [],
     items: [],
   },

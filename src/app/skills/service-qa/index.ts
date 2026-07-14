@@ -43,7 +43,7 @@ function scoreSection(query: string, section: KnowledgeSection): number {
 
   const serviceKeywords = [
     "服务台", "客服台", "问询台", "咨询台", "轮椅", "退货", "退换", "邮寄", "寄送", "快递", "配送", "营业时间", "失物招领", "无障碍", "会员",
-    "餐厅", "餐饮", "美食", "吃饭", "菜系", "菜品", "推荐菜", "人均", "小笼包", "烤鸭", "咖啡", "茶饮",
+    "餐厅", "餐饮", "美食", "吃饭", "吃什么", "午餐", "晚餐", "菜系", "菜品", "推荐菜", "人均", "小笼包", "烤鸭", "咖啡", "茶饮", "美食广场", "火锅", "便当", "轻食", "海底捞",
   ];
 
   let score = 0;
@@ -69,8 +69,8 @@ async function isMallServiceQuery(text: string): Promise<boolean> {
       role: "system",
       content:
         "你是一个意图分类器。判断用户问题是否属于’商场服务与信息咨询’。\n"
-        + "商场服务与信息咨询包含但不限于：服务台、轮椅、退换货、寄送配送、营业时间、失物招领、无障碍、会员服务规则、餐厅推荐、餐厅信息、餐饮、美食、楼层品牌、店铺位置等。\n"
-        + "如果，输出 YES；如果不是，输出 NO。只允许输出 YES 或 NO。",
+        + "商场服务与信息咨询包含但不限于：服务台、轮椅、退换货、寄送配送、营业时间、失物招领、无障碍、会员服务规则、餐厅推荐、今天吃什么、餐饮、美食、楼层品牌、店铺位置等。\n"
+        + "如果是，输出 YES；如果不是，输出 NO。只允许输出 YES 或 NO。",
     },
     {
       role: "user",
@@ -147,11 +147,11 @@ async function rewriteWithLLM(userQuestion: string, snippet: string): Promise<st
     {
       role: "system",
       content:
-        "你是SKP商场专属客服。你只能基于提供的’知识片段’作答，严禁杜撰。\n"
+        "你是DTX综合商圈专属客服。你只能基于提供的’知识片段’作答，严禁杜撰。\n"
         + "要求：\n"
-        + "1) 语气自然、专业、有温度，称呼用户为’李先生’。\n"
+        + "1) 语气自然、专业、有温度，称呼用户为’先生’或’女士’，亲切自然。\n"
         + "2) 内容必须与知识片段一致，不可新增事实。\n"
-        + "3) 若用户问餐厅推荐，列出知识片段中的相关餐厅，包括菜系和特色菜品。\n"
+        + "3) 若用户问吃什么/餐厅推荐，按知识片段中的餐厅列出相关选项，涵盖商务宴请、家庭聚餐、快速午餐等不同场景和人均档次，给出菜系和特色，并给一句选择建议。\n"
         + "4) 若知识片段无法覆盖用户问题，直接回复：’抱歉，目前没有相关信息。’\n"
         + "5) 输出仅回答正文，不要额外解释。",
     },
@@ -177,7 +177,7 @@ async function rewriteWithLLM(userQuestion: string, snippet: string): Promise<st
 
 export const serviceQASkill: Skill = {
   name: "service-qa",
-  intentDescription: "处理商场服务与信息咨询（服务台、轮椅、退换货、邮寄、营业时间、失物招领、餐厅推荐、餐饮信息、楼层品牌等），基于知识库文档回答且不杜撰。",
+  intentDescription: "处理商场服务与餐饮美食咨询（今天吃什么、餐厅推荐、餐饮信息、服务台、轮椅、退换货、邮寄、营业时间、失物招领、楼层品牌等），基于知识库文档回答且不杜撰。",
   match: () => true,
   handle: async ({ text }) => {
     const mallServiceQuery = await isMallServiceQuery(text);

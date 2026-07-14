@@ -10,7 +10,7 @@ export const toolDefinitions: ToolDefinition[] = [
     function: {
       name: "appointment",
       description:
-        "处理奢侈品品牌专柜预约。包括：1) 预约创建（如'帮我预约Chanel'、'帮我约下午2点的Hermès'）；2) 档期查询（如'周末LV有档期吗'）；3) 预约状态查询（如'我的预约几点'）；4) 用户在选档期流程中选择了时段（如'14:00'）。重要：'预约'/'约档期'关键词路由到此skill，'排队'/'排号'路由到queue。",
+        "处理品牌专柜预约。包括：1) 预约创建（如'帮我预约Chanel'、'帮我约下午2点的Hermès'）；2) 档期查询（如'周末LV有档期吗'）；3) 预约状态查询（如'我的预约几点'）；4) 用户在选档期流程中选择了时段（如'14:00'）。重要：'预约'/'约档期'关键词路由到此skill，'排队'/'排号'路由到queue。",
       parameters: {
         type: "object",
         properties: {
@@ -100,7 +100,7 @@ export const toolDefinitions: ToolDefinition[] = [
     function: {
       name: "membership",
       description:
-        "处理会员相关事务。包括：1) 用户表达入会意愿（如'我想入会'）；2) 用户确认入会（如对话上下文涉及入会时用户回复'好的''可以'等确认）；3) 询问会员信息（如'怎么办会员'）；4) 查询会员权益；5) 入会后的偏好收集（用户表达品牌/品类偏好时也调用此工具记录）。",
+        "处理会员相关事务。包括：1) 用户表达入会意愿（如'我想入会'）；2) 用户确认个人信息授权并入会；3) 询问会员信息；4) 查询会员权益；5) 入会后的偏好收集。",
       parameters: {
         type: "object",
         properties: {
@@ -136,7 +136,7 @@ export const toolDefinitions: ToolDefinition[] = [
     function: {
       name: "store-consult",
       description:
-        "处理品牌店铺在线咨询。包括：1) 品牌信息查询（楼层位置、品类、风格）；2) 当季新品/到货咨询；3) 礼品推荐与品牌推荐；4) 联系SA导购。当用户询问品牌信息、新品、送礼推荐、品牌位置等来店前咨询场景时调用。",
+        "处理品牌/好物在线咨询。包括：1) 品牌信息查询（楼层位置、品类、风格）；2) 当季新品/到货咨询；3) 生鲜好物推荐；4) 礼品推荐与品牌推荐（如520送点什么）；5) 联系SA导购。当用户询问品牌信息、新品、好物、送礼推荐、品牌位置等来店前咨询场景时调用。",
       parameters: {
         type: "object",
         properties: {

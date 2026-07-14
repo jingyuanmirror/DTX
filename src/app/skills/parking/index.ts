@@ -15,7 +15,7 @@ const SIMULATED_AVAILABILITY: Record<string, { total: number; available: number;
 };
 
 function generateReservationId(): string {
-  return `SKP-RSV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+  return `DTX-RSV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 }
 
 function getParkingBenefitMessageFromDoc(memberTier: "silver" | "diamond" | "black" | undefined): string | null {
@@ -116,8 +116,7 @@ export const parkingSkill: Skill = {
       const floorLabel = `${info.floor}层`;
 
       return {
-        text: `李先生，已为您记下停车位置：${floorLabel} ${info.location}。后续您随时询问停车信息，我会为您计算时长和费用。`,
-        quickReplies: ["查询停车状态", "积分抵扣停车费", "今日专属优惠"],
+        text: `李先生，车位已经帮您记好啦：${floorLabel} ${info.location}。之后随时问我，都能帮您查位置、时长和费用。`,
         parkingCard: {
           type: "parking-card",
           location: `${floorLabel} · ${info.location}`,
@@ -125,7 +124,25 @@ export const parkingSkill: Skill = {
           duration: "0分钟",
           fee: "0",
           feeRate: "15元/小时 · 前30分钟免费",
+          membershipOffer: userProfile.isMember
+            ? undefined
+            : { benefit: "入会享2小时免费停车", saving: "最高省¥30" },
         },
+        followUpMessages: [{
+          text: "今天商场的活动不少，我先挑了几个您可能喜欢的，从1F一路逛到5F，顺路又不走回头路。想逛美食、咖啡还是美妆？告诉我，我来帮您量身规划！",
+          quickReplies: ["我喜欢美食", "想看咖啡活动", "推荐美妆活动"],
+          parkingShoppingGuideCard: {
+            type: "parking-shopping-guide-card",
+            title: "今日活动推荐",
+            subtitle: "",
+            stops: [
+              { floor: "1F", title: "知味观", recommendation: "招牌糕点与现制小吃可用", tag: "满20减5", action: "领券" },
+              { floor: "2F", title: "瑞幸咖啡 · 春季上新", recommendation: "原价18元茉莉拿铁", tag: "6.9元换购", action: "立即购买" },
+              { floor: "5F", title: "屈臣氏", recommendation: "价值34元的精选面膜", tag: "3.99元换购", action: "立即购买" },
+            ],
+            coupon: { brand: "DTX", discount: "满100减10", title: "全场通用券" },
+          },
+        }],
         sideEffects: {
           parkingInfo: info,
         },
@@ -158,6 +175,9 @@ export const parkingSkill: Skill = {
           duration,
           fee,
           feeRate: "15元/小时 · 前30分钟免费",
+          membershipOffer: userProfile.isMember
+            ? undefined
+            : { benefit: "入会享2小时免费停车", saving: "最高省¥30" },
         },
       };
     }
