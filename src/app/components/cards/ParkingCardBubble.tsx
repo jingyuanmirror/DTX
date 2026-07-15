@@ -61,24 +61,30 @@ export function ParkingCardBubble({ card, onJoin }: { card: ParkingCard; onJoin:
         </div>
         <p className="mt-2 text-[9px] text-[#A89D8A] tracking-wide">{card.feeRate}</p>
 
-        {/* 会员优惠:紫 CTA */}
+        {/* 非会员入会引导:浅紫底块,横向三段并排(权益 | 省钱 | 入会) */}
         {card.membershipOffer && (
-          <div className="mt-3 pt-3 border-t border-[#F0EBE0] flex items-center gap-2.5">
-            <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: "rgba(124,111,224,0.10)", border: "1px solid rgba(124,111,224,0.20)" }}>
-              <Crown size={13} className="text-[#7C6FE0]" strokeWidth={1.5} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[10px] text-[#20201C]" style={{ fontWeight: 500 }}>{card.membershipOffer.benefit}</p>
-              <p className="mt-0.5 text-[9px] text-[#A89D8A]">{card.membershipOffer.saving}</p>
+          <div className="mt-3 rounded-[12px] p-3.5" style={{ background: "linear-gradient(135deg, rgba(124,111,224,0.08) 0%, rgba(91,77,208,0.05) 100%)", border: "1px solid rgba(124,111,224,0.18)" }}>
+            <div className="flex items-center gap-3">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full" style={{ background: "rgba(124,111,224,0.14)" }}>
+                <Crown size={15} className="text-[#7C6FE0]" strokeWidth={1.5} />
+              </span>
+              <div className="min-w-0 flex-1 flex items-center gap-2.5">
+                <div className="min-w-0">
+                  <p className="text-[11px] text-[#20201C] leading-tight" style={{ fontWeight: 500 }}>{card.membershipOffer.benefit}</p>
+                  <p className="text-[10px] text-[#7C6FE0] leading-tight mt-0.5" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
+                    {card.membershipOffer.saving}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onJoin}
+                className="shrink-0 h-9 px-4 flex items-center justify-center rounded-[10px] text-[11px] text-white transition active:scale-[0.98]"
+                style={{ background: "linear-gradient(180deg, #1840A0 0%, #103080 100%)", boxShadow: "0 3px 8px rgba(16,48,128,0.24)", fontWeight: 500 }}
+              >
+                立即入会
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={onJoin}
-              className="shrink-0 h-8 px-4 flex items-center justify-center rounded-[10px] text-[11px] text-white transition active:scale-[0.98]"
-              style={{ background: "linear-gradient(180deg, #1840A0 0%, #103080 100%)", boxShadow: "0 3px 8px rgba(16,48,128,0.24)", fontWeight: 500 }}
-            >
-              立即入会
-            </button>
           </div>
         )}
       </div>
