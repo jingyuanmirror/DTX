@@ -1,7 +1,11 @@
 import { motion } from "motion/react";
-import { ChevronRight, Gift, MapPin, Navigation } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
 import type { NewMemberOfferCard } from "../../types";
 
+/**
+ * 新人券推荐卡 —— 编辑型设计语言
+ * 配图独立铺顶不压字 · 衬线金额成焦点 · 领取为主 CTA(紫色渐变)
+ */
 export function NewMemberOfferCardBubble({
   card,
   onAction,
@@ -14,50 +18,61 @@ export function NewMemberOfferCardBubble({
       initial={{ opacity: 0, y: 14, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-      className="mt-2.5 w-full overflow-hidden rounded-[14px] border border-[#E3D7C6] bg-white shadow-[0_10px_26px_rgba(45,36,24,0.10)]"
+      className="mt-2.5 w-full overflow-hidden rounded-[16px] border border-[#E8E3D8] bg-white"
+      style={{ boxShadow: "0 1px 2px rgba(42,37,32,0.04)" }}
     >
-      <div className="relative h-[92px] overflow-hidden">
+      {/* 配图:独立铺顶,不压字 */}
+      <div className="relative h-[96px] overflow-hidden">
         <img src="/checkin-market.jpg" alt={card.store} className="size-full object-cover" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(16,35,54,0.92)_0%,rgba(16,35,54,0.58)_54%,rgba(16,35,54,0.08)_100%)]" />
-        <div className="absolute inset-0 flex items-center justify-between px-4 text-white">
-          <div>
-            <div className="mb-1 flex items-center gap-1 text-[9px] text-[#F1D394]"><Gift size={12} /> 新人礼已到账</div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[28px] font-semibold">¥{card.amount}</span>
-              <span className="text-[10px]">无门槛券</span>
-            </div>
-          </div>
-          <span className="rounded-full border border-white/60 bg-white/90 px-2 py-1 text-[8px] font-medium text-[#173A5E]">{card.validLabel}</span>
-        </div>
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(16,27,64,0) 55%, rgba(16,27,64,0.18) 100%)" }} />
+        <span
+          className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-[9px] text-white"
+          style={{ background: "rgba(16,27,64,0.55)", backdropFilter: "blur(4px)", fontWeight: 500 }}
+        >
+          {card.validLabel}
+        </span>
       </div>
 
-      <div className="px-4 py-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-[12px] font-semibold text-[#203B5C]">{card.store}</p>
-            <p className="mt-1 flex items-center gap-1 text-[8px] text-[#8E8377]">
-              <MapPin size={10} className="text-[#A88445]" /> {card.floor} · 距当前位置约{card.distance}
-            </p>
-          </div>
-          <span className="shrink-0 text-[8px] text-[#9A8E80]">{card.categories.join(" · ")}</span>
+      <div className="px-5 py-4">
+        {/* eyebrow + 衬线金额焦点 */}
+        <p className="text-[9px] tracking-[0.2em] uppercase text-[#A89D8A] mb-2" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          NEW MEMBER · 新人礼
+        </p>
+        <div className="flex items-baseline gap-1.5 mb-3">
+          <span className="text-[30px] leading-none text-[#5B4DD0]" style={{ fontFamily: "'Cormorant', serif", fontWeight: 600 }}>
+            ¥{card.amount}
+          </span>
+          <span className="text-[10px] text-[#8C8278]">无门槛券</span>
         </div>
 
-        <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+        {/* 门店 + 位置 + 品类 */}
+        <div className="flex items-start justify-between gap-2 pt-3 border-t border-[#F0EBE0]">
+          <div className="min-w-0">
+            <p className="text-[12px] text-[#20201C]" style={{ fontWeight: 500 }}>{card.store}</p>
+            <p className="mt-1 flex items-center gap-1 text-[9px] text-[#A89D8A]">
+              <MapPin size={10} /> {card.floor} · 距当前位置约{card.distance}
+            </p>
+          </div>
+          <span className="shrink-0 text-[9px] text-[#A89D8A]">{card.categories.join(" · ")}</span>
+        </div>
+
+        {/* CTA:领取(主) + 查看好物(次) */}
+        <div className="mt-4 flex items-center gap-2">
           <button
             type="button"
-            onClick={() => onAction("查看今日好物")}
-            className="flex h-9 items-center justify-center gap-1 rounded-full bg-[#173A5E] text-[10px] font-medium text-white transition active:scale-[0.98]"
+            onClick={() => onAction("领取新人券")}
+            className="flex-1 flex h-10 items-center justify-center gap-1 rounded-[10px] text-[12px] text-white transition active:scale-[0.98]"
+            style={{ background: "linear-gradient(180deg, #8070F0 0%, #5B4DD0 100%)", boxShadow: "0 3px 8px rgba(91,77,208,0.24)", fontWeight: 500 }}
           >
-            查看今日好物 <ChevronRight size={12} />
+            立即领取
           </button>
           <button
             type="button"
-            onClick={() => onAction("导航到DTX精品超市")}
-            className="grid size-9 place-items-center rounded-full border border-[#D8CDBD] text-[#8A6A38] transition active:scale-95"
-            title="导航到店"
-            aria-label="导航到店"
+            onClick={() => onAction("查看今日好物")}
+            className="h-10 px-3 flex items-center justify-center gap-0.5 rounded-[10px] text-[11px] transition active:scale-[0.98]"
+            style={{ border: "1px solid rgba(124,111,224,0.30)", color: "#7C6FE0", background: "rgba(124,111,224,0.06)", fontWeight: 500 }}
           >
-            <Navigation size={14} />
+            查看好物 <ChevronRight size={13} />
           </button>
         </div>
       </div>

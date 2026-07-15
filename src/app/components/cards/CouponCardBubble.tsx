@@ -1,7 +1,11 @@
 import { motion } from "motion/react";
 import type { CouponCard } from "../../types";
 
-export function CouponCardBubble({ coupon }: { coupon: CouponCard }) {
+/**
+ * 优惠券卡 —— 编辑型设计语言
+ * 左侧紫竖边(券凭证感) · 金额衬线焦点+标题分行 · 领取按钮(深蓝渐变,区别于紫气泡)右下
+ */
+export function CouponCardBubble({ coupon, onUse }: { coupon: CouponCard; onUse?: () => void }) {
   const isMallWide = coupon.scope === "mall";
 
   return (
@@ -9,56 +13,50 @@ export function CouponCardBubble({ coupon }: { coupon: CouponCard }) {
       initial={{ opacity: 0, y: 16, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden mt-2 mx-1"
+      className="relative overflow-hidden mt-2 mx-1 flex"
       style={{
         width: "100%",
         maxWidth: 300,
-        borderRadius: 14,
+        borderRadius: 16,
         background: "#FFFFFF",
-        border: "1px solid rgba(240,176,64,0.16)",
-        boxShadow: "0 2px 12px rgba(42,37,32,0.06)",
+        border: "1px solid #E8E3D8",
+        boxShadow: "0 1px 2px rgba(42,37,32,0.04)",
       }}
     >
-      <div
-        className="h-[3px]"
-        style={{
-          background: isMallWide
-            ? "linear-gradient(90deg, #4CAF8E, #6BC4A6, #4CAF8E)"
-            : "linear-gradient(90deg, #F0B040, #FFCC66, #F0B040)",
-        }}
-      />
+      {/* 左侧紫色竖条:券的凭证感 */}
+      <div className="shrink-0 w-1 self-stretch" style={{ background: "linear-gradient(180deg, #8070F0 0%, #5B4DD0 100%)" }} />
 
-      <div className="px-4 pt-3 pb-3.5">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-[12px] text-[#20201C]" style={{ fontWeight: 600, letterSpacing: "0.02em" }}>
-            {coupon.brand}
-          </span>
-          <span
-            className="text-[8px] tracking-wider px-2 py-0.5 rounded-full"
-            style={{
-              background: isMallWide ? "rgba(76,175,142,0.1)" : "rgba(240,176,64,0.12)",
-              color: isMallWide ? "#3E9C7E" : "#C8841E",
-              border: isMallWide ? "1px solid rgba(76,175,142,0.2)" : "1px solid rgba(240,176,64,0.22)",
-            }}
+      <div className="flex-1 pl-5 pr-4 py-4 flex items-center justify-between gap-3">
+        {/* 左:品牌行 + 金额(衬线)+ 标题分行 + 有效期 */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[12px] text-[#20201C]" style={{ fontWeight: 500, letterSpacing: "0.02em" }}>
+              {coupon.brand}
+            </span>
+            <span className="text-[9px] text-[#A89D8A]">· {isMallWide ? "商场通用" : "品牌专属"}</span>
+          </div>
+
+          <div className="flex items-baseline gap-1.5 mb-1">
+            <span className="text-[30px] leading-none text-[#5B4DD0]" style={{ fontFamily: "'Cormorant', serif", fontWeight: 600 }}>
+              {coupon.discount}
+            </span>
+          </div>
+          <p className="text-[11px] text-[#20201C] mb-1" style={{ fontWeight: 500 }}>{coupon.title}</p>
+          <p className="text-[9px] text-[#A89D8A] tracking-wide">有效期至 {coupon.validUntil}</p>
+        </div>
+
+        {/* 右:领取 CTA(深蓝渐变,区别于紫色气泡) */}
+        {onUse && (
+          <button
+            type="button"
+            onClick={onUse}
+            className="shrink-0 self-center h-10 px-5 flex items-center justify-center rounded-[10px] text-[12px] text-white transition active:scale-[0.98]"
+            style={{ background: "linear-gradient(180deg, #1840A0 0%, #103080 100%)", boxShadow: "0 3px 8px rgba(16,48,128,0.26)", fontWeight: 500 }}
           >
-            {isMallWide ? "商场通用" : "品牌专属"}
-          </span>
-        </div>
-
-        <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-[22px] text-[#F0B040]" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, lineHeight: 1 }}>
-            {coupon.discount}
-          </span>
-          <span className="text-[12px] text-[#20201C]" style={{ fontWeight: 500 }}>
-            {coupon.title}
-          </span>
-        </div>
-
-        <p className="text-[9px] text-[#A89D8A] tracking-wide">有效期至 {coupon.validUntil}</p>
+            领取
+          </button>
+        )}
       </div>
-
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2.5 h-5 rounded-r-full" style={{ background: "#FEF3EB" }} />
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-5 rounded-l-full" style={{ background: "#FEF3EB" }} />
     </motion.div>
   );
 }

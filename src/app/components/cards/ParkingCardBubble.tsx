@@ -2,97 +2,80 @@ import { motion } from "motion/react";
 import { CarFront, Crown, MapPin } from "lucide-react";
 import type { ParkingCard } from "../../types";
 
+/**
+ * 停车卡 —— 编辑型设计语言
+ * 白底 · 紫色单一强调 · 衬线车位号焦点 · 细线分隔信息列 · 会员优惠紫 CTA
+ */
 export function ParkingCardBubble({ card, onJoin }: { card: ParkingCard; onJoin: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.92 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="relative mt-2.5 w-full overflow-hidden"
+      className="relative mt-2.5 w-full overflow-hidden flex"
       style={{
         width: "100%",
-        borderRadius: 18,
+        borderRadius: 16,
         background: "#FFFFFF",
-        border: "1px solid rgba(240,176,64,0.2)",
-        boxShadow: "0 8px 26px rgba(42,37,32,0.1), 0 1px 6px rgba(42,37,32,0.05)",
+        border: "1px solid #E8E3D8",
+        boxShadow: "0 1px 2px rgba(42,37,32,0.04)",
       }}
     >
-      <div
-        className="absolute inset-x-0 top-0 h-[2px]"
-        style={{ background: "linear-gradient(90deg, #F0B040, #FFCC66, #F0B040)" }}
-      />
+      {/* 左侧紫色竖条(与券卡一致,凭证感) */}
+      <div className="shrink-0 w-1 self-stretch" style={{ background: "linear-gradient(180deg, #8070F0 0%, #5B4DD0 100%)" }} />
 
-      <div
-        className="px-5 py-3"
-        style={{
-          background: "linear-gradient(135deg, #FFF8EE 0%, #FFF0DC 100%)",
-          borderBottom: "1px solid rgba(240,176,64,0.12)",
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <CarFront size={18} strokeWidth={1.8} color="#F0B040" />
-            <span className="text-[13px] tracking-wide text-[#20201C]" style={{ fontWeight: 600 }}>
-              智能停车
-            </span>
-          </div>
-          <span
-            className="rounded-full px-2.5 py-0.5 text-[9px] tracking-wide"
-            style={{
-              background: "rgba(139,168,136,0.15)",
-              color: "#6B8C6A",
-              border: "1px solid rgba(139,168,136,0.25)",
-              fontWeight: 500,
-            }}
-          >
-            已记录
-          </span>
-        </div>
-      </div>
-
-      <div className="px-5 py-3.5">
-        <div className="mb-2.5 flex items-start gap-2.5">
-          <span className="w-5 h-5 mt-[2px] flex items-center justify-center" style={{ color: "#F0B040" }}>
-            <MapPin size={16} strokeWidth={1.8} color="#F0B040" />
-          </span>
-          <div>
-            <p className="text-[10px] tracking-wide text-[#A89D8A] mb-0.5">停车位置</p>
-            <p className="text-[26px] leading-tight text-[#20201C]" style={{ fontWeight: 600 }}>
-              {card.location}
+      <div className="flex-1 pl-5 pr-5 py-4">
+        {/* 顶部:eyebrow + 车位衬线焦点 */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <CarFront size={15} strokeWidth={1.5} color="#7C6FE0" />
+            <p className="text-[9px] tracking-[0.2em] uppercase text-[#A89D8A]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+              PARKING · 智能停车
             </p>
           </div>
+          <span className="flex items-center gap-1 text-[9px] text-[#A89D8A]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF8E]" /> 已记录
+          </span>
         </div>
 
-        <div className="flex gap-3.5">
-          <div className="flex-1 rounded-[12px] px-3.5 py-2.5" style={{ background: "#FFFAF0", border: "1px solid rgba(240,176,64,0.08)" }}>
-            <p className="text-[10px] tracking-wide text-[#A89D8A] mb-1">停车时长</p>
-            <p className="text-[20px] text-[#20201C] leading-none" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
+        <p className="text-[10px] text-[#A89D8A] mb-1 flex items-center gap-1"><MapPin size={10} /> 停车位置</p>
+        <p className="text-[28px] leading-none text-[#20201C] mb-4" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, letterSpacing: "0.02em" }}>
+          {card.location}
+        </p>
+
+        {/* 时长 / 费用:细线分隔,非色块 */}
+        <div className="flex items-end justify-between gap-3 py-3 border-y border-[#F0EBE0]">
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] text-[#A89D8A] mb-1">停车时长</p>
+            <p className="text-[18px] text-[#20201C] leading-none" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>
               {card.duration}
             </p>
           </div>
-          <div className="flex-1 rounded-[12px] px-3.5 py-2.5" style={{ background: "#FFFAF0", border: "1px solid rgba(240,176,64,0.08)" }}>
-            <p className="text-[10px] tracking-wide text-[#A89D8A] mb-1">停车费用</p>
-            <p className="text-[20px] text-[#F0B040] leading-none" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>
+          <div className="w-px h-8 bg-[#F0EBE0]" />
+          <div className="min-w-0 flex-1 text-right">
+            <p className="text-[9px] text-[#A89D8A] mb-1">停车费用</p>
+            <p className="text-[18px] text-[#5B4DD0] leading-none" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 600 }}>
               ¥{card.fee}
             </p>
           </div>
         </div>
+        <p className="mt-2 text-[9px] text-[#A89D8A] tracking-wide">{card.feeRate}</p>
 
-        <p className="mt-2 text-[9px] tracking-wide text-[#B6AA99]">{card.feeRate}</p>
-
+        {/* 会员优惠:紫 CTA */}
         {card.membershipOffer && (
-          <div className="mt-2.5 flex items-center gap-2.5 rounded-[10px] border border-[#CFE4DA] bg-[#F0F8F4] px-3 py-2.5">
-            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white text-[#4E806F] shadow-sm">
-              <Crown size={13} />
+          <div className="mt-3 pt-3 border-t border-[#F0EBE0] flex items-center gap-2.5">
+            <span className="grid size-7 shrink-0 place-items-center rounded-full" style={{ background: "rgba(124,111,224,0.10)", border: "1px solid rgba(124,111,224,0.20)" }}>
+              <Crown size={13} className="text-[#7C6FE0]" strokeWidth={1.5} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[9px] font-semibold text-[#356B59]">{card.membershipOffer.benefit}</p>
-              <p className="mt-0.5 text-[8px] text-[#6D8B80]">{card.membershipOffer.saving}</p>
+              <p className="truncate text-[10px] text-[#20201C]" style={{ fontWeight: 500 }}>{card.membershipOffer.benefit}</p>
+              <p className="mt-0.5 text-[9px] text-[#A89D8A]">{card.membershipOffer.saving}</p>
             </div>
             <button
               type="button"
               onClick={onJoin}
-              className="h-7 shrink-0 rounded-full bg-[#173A5E] px-3 text-[8px] font-medium text-white transition active:scale-95"
+              className="shrink-0 h-8 px-4 flex items-center justify-center rounded-[10px] text-[11px] text-white transition active:scale-[0.98]"
+              style={{ background: "linear-gradient(180deg, #1840A0 0%, #103080 100%)", boxShadow: "0 3px 8px rgba(16,48,128,0.24)", fontWeight: 500 }}
             >
               立即入会
             </button>

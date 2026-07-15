@@ -362,9 +362,6 @@ export default function App() {
                   boxShadow: "0 1px 3px rgba(42,37,32,0.04)",
                 }}
               >
-                {feature.accent && (
-                  <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: "#8070F0" }} />
-                )}
                 <div className="min-w-0">
                   <div className="flex items-center justify-center gap-1.5">
                     <span className="flex-shrink-0" style={{ color: "#B7924A" }}>
