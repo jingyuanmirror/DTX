@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import { MapPin, Sparkles, UtensilsCrossed } from "lucide-react";
 import type { RestaurantCard } from "../../types";
@@ -8,31 +9,34 @@ import type { RestaurantCard } from "../../types";
  */
 export function RestaurantCardBubble({ card }: { card: RestaurantCard }) {
   const dishes = (card.recommendation ?? []).slice(0, 4);
-  const hasImage = Boolean(card.image);
+  const [imageFailed, setImageFailed] = useState(false);
+  const hasImage = Boolean(card.image) && !imageFailed;
 
   return (
     <motion.section
       initial={{ opacity: 0, y: 16, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-      className="mt-2.5 w-full overflow-hidden flex rounded-[16px] border border-[#E8E3D8] bg-white"
+      className="h-full w-full overflow-hidden flex rounded-[8px] border border-[#E8E3D8] bg-white"
       style={{ boxShadow: "0 1px 2px rgba(42,37,32,0.04)" }}
     >
       {/* 左侧紫色竖条 */}
       <div className="shrink-0 w-1 self-stretch" style={{ background: "linear-gradient(180deg, #8070F0 0%, #5B4DD0 100%)" }} />
 
       <div className="flex-1 min-w-0">
-        {/* 顶部配图:有图显图,无图走餐具图标轻占位 */}
-        <div className="relative h-[110px] overflow-hidden" style={!hasImage ? { background: "linear-gradient(135deg, #EDE7DA 0%, #D8D1C7 100%)" } : undefined}>
+        {/* 顶部配图；加载失败时仍保留完整的菜系封面。 */}
+        <div className="relative h-[124px] overflow-hidden" style={!hasImage ? { background: "linear-gradient(135deg, #35342F 0%, #706856 100%)" } : undefined}>
           {hasImage ? (
             <>
-              <img src={card.image} alt={card.name} className="size-full object-cover" />
+              <img src={card.image} alt={`${card.name}餐厅头图`} className="size-full object-cover" onError={() => setImageFailed(true)} />
               <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(16,27,64,0) 45%, rgba(16,27,64,0.42) 100%)" }} />
             </>
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-              <UtensilsCrossed size={24} strokeWidth={1.4} color="#B7AE9C" />
-              <p className="text-[8px] tracking-wider text-[#B7AE9C]">配图生成中</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <span className="flex size-10 items-center justify-center rounded-full border border-white/25 bg-white/10">
+                <UtensilsCrossed size={20} strokeWidth={1.4} color="#F4EFE5" />
+              </span>
+              <p className="text-[10px] text-[#F4EFE5]">{card.name}</p>
             </div>
           )}
           {/* 菜系胶囊角标 */}

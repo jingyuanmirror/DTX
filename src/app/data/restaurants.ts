@@ -45,7 +45,7 @@ export const RESTAURANTS: Restaurant[] = [
     highlight: "商务宴请首选,家烧黄鱼、沙蒜豆面是招牌。",
     recommendation: ["家烧黄鱼", "沙蒜豆面", "熔岩蜜汁红薯", "花胶黄鱼羹"],
     tip: "需提前预约,包间提前1天预定。",
-    image: "/restaurant-xinrongji.jpg",
+    image: "/checkin-hotpot.jpg",
   },
   {
     id: "dadong",
@@ -60,7 +60,7 @@ export const RESTAURANTS: Restaurant[] = [
     highlight: "酥不腻烤鸭皮酥肉嫩,午市套餐性价比高。",
     recommendation: ["酥不腻烤鸭", "董氏烧海参", "奇妙虾球", "红花汁鳘肚"],
     tip: "烤鸭建议整只预定,双人份可点半只。",
-    image: "/restaurant-dadong.jpg",
+    image: "/checkin-hotpot.jpg",
   },
   {
     id: "robuchon",
@@ -75,7 +75,7 @@ export const RESTAURANTS: Restaurant[] = [
     highlight: "吧台位可观开放式厨房,适合1–2位精致用餐。",
     recommendation: ["鱼子酱龙虾冻", "黑松露和牛塔塔", "焦糖布丁"],
     tip: "晚市建议提前2天预约,着装商务休闲。",
-    image: "/restaurant-robuchon.jpg",
+    image: "/checkin-hotpot.jpg",
   },
   {
     id: "yongfu",
@@ -90,7 +90,7 @@ export const RESTAURANTS: Restaurant[] = [
     highlight: "冰镇花雕醉虾、红膏炝蟹,海鲜当季时令最佳。",
     recommendation: ["冰镇花雕醉虾", "宁式鳝丝", "红膏炝蟹", "苔菜小方烤"],
     tip: "午市套餐性价比较高。",
-    image: "/restaurant-yongfu.jpg",
+    image: "/checkin-hotpot.jpg",
   },
   {
     id: "cuiyuan",
@@ -105,7 +105,7 @@ export const RESTAURANTS: Restaurant[] = [
     highlight: "脆皮乳猪、菠萝咕噜肉,周末茶市人气高。",
     recommendation: ["脆皮乳猪", "菠萝咕噜肉", "脆皮烧鹅", "杨枝甘露"],
     tip: "周末茶市人气高,建议11:00前到店;有儿童座椅,适合家庭。",
-    image: "/restaurant-cuiyuan.jpg",
+    image: "/checkin-hotpot.jpg",
   },
   {
     id: "dingtaifeng",
@@ -120,7 +120,7 @@ export const RESTAURANTS: Restaurant[] = [
     highlight: "小笼包、蟹粉小笼是经典,非高峰等位较短。",
     recommendation: ["小笼包", "蟹粉小笼", "虾仁烧卖", "芋泥小笼"],
     tip: "全天排队,14:00–17:00等位较短;可外带生小笼。",
-    image: "/restaurant-dingtaifeng.jpg",
+    image: "/checkin-hotpot.jpg",
   },
   {
     id: "haidilao",
@@ -150,7 +150,7 @@ export const RESTAURANTS: Restaurant[] = [
     highlight: "多肉葡萄、烤黑糖波波,提前下单到店取最快。",
     recommendation: ["多肉葡萄", "生打椰椰芒", "烤黑糖波波牛乳"],
     tip: "支持小程序提前下单到店取。",
-    image: "/restaurant-xicha.jpg",
+    image: "/checkin-coffee.jpg",
   },
   {
     id: "arabica",
@@ -180,7 +180,7 @@ export const RESTAURANTS: Restaurant[] = [
     highlight: "档口多、出餐快,日式拉面、韩式拌饭当天想吃啥都有。",
     recommendation: ["日式拉面", "韩式拌饭", "泰国炒粉", "中式快餐"],
     tip: "午餐高峰12:00–13:00,建议11:30前或14:00后到。",
-    image: "/restaurant-foodcourt.jpg",
+    image: "/checkin-market.jpg",
   },
   {
     id: "market-light",

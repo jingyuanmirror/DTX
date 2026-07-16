@@ -6,7 +6,7 @@ import { ReservationCardBubble } from "../cards/ReservationCardBubble";
 import { QueueCardBubble } from "../cards/QueueCardBubble";
 import { CouponCardBubble } from "../cards/CouponCardBubble";
 import { BrandCardBubble } from "../cards/BrandCardBubble";
-import { RestaurantCardBubble } from "../cards/RestaurantCardBubble";
+import { RestaurantCardCarousel } from "../cards/RestaurantCardCarousel";
 import { AppointmentCardBubble } from "../cards/AppointmentCardBubble";
 import { CheckInCardBubble } from "../cards/CheckInCardBubble";
 import { MembershipAuthorizationCardBubble } from "../cards/MembershipAuthorizationCardBubble";
@@ -85,7 +85,7 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
           {isAgent && msg.queueCard && <QueueCardBubble card={msg.queueCard} />}
           {isAgent && !msg.checkInCard && msg.coupons && msg.coupons.map((coupon) => <CouponCardBubble key={`${coupon.brand}-${coupon.discount}`} coupon={coupon} onUse={() => onQuickReply(`领取${coupon.brand}优惠券`)} />)}
           {isAgent && msg.brandCards && msg.brandCards.map((bc) => <BrandCardBubble key={`${bc.brand}-${bc.floor}`} card={bc} />)}
-          {isAgent && msg.restaurantCards && msg.restaurantCards.map((rc) => <RestaurantCardBubble key={`${rc.name}-${rc.floor}`} card={rc} />)}
+          {isAgent && msg.restaurantCards && <RestaurantCardCarousel cards={msg.restaurantCards} />}
           {isAgent && msg.appointmentCard && <AppointmentCardBubble card={msg.appointmentCard} />}
           {isAgent && msg.checkInCard && <CheckInCardBubble card={msg.checkInCard} />}
 
