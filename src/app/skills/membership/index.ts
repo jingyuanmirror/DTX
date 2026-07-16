@@ -1,4 +1,5 @@
 import type { Skill } from "../../agent/types";
+import { getUserSalutation } from "../../utils/salutation";
 import type { EnrollmentForm, UserProfile } from "../../types";
 import { buildPreferenceSummary, detectPreference } from "../../utils/preference";
 import { chatCompletion } from "../../llm/client";
@@ -260,9 +261,10 @@ export const membershipSkill: Skill = {
       const stillMissing = missingFields(updatedForm);
 
       if (stillMissing.length === 0) {
-        const displayName = updatedForm.name ?? "李先生";
+        const displayName = updatedForm.name ?? userProfile.name ?? "会员";
+        const salutation = getUserSalutation({ name: displayName, gender: updatedForm.gender ?? userProfile.gender });
         return {
-          text: `感谢您提供完整信息，${displayName}先生。入会手续已办理完成，您现在是DTX银卡会员。\n\n您可以点击会员中心查看会员信息，也可以随时向我咨询。\n\n另外，为了更好地服务您，您可以把偏好告诉我，比如您喜欢的品类或近期关注的品牌，有相关信息我会第一时间通知您。`,
+          text: `感谢您提供完整信息，${salutation}。入会手续已办理完成，您现在是DTX银卡会员。\n\n您可以点击会员中心查看会员信息，也可以随时向我咨询。\n\n另外，为了更好地服务您，您可以把偏好告诉我，比如您喜欢的品类或近期关注的品牌，有相关信息我会第一时间通知您。`,
           quickReplies: ["美妆护肤", "生鲜美食", "亲子娱乐", "今日优惠"],
           card: {
             type: "member-card",
@@ -275,6 +277,8 @@ export const membershipSkill: Skill = {
           },
           sideEffects: {
             setUserProfile: () => ({
+              name: displayName,
+              gender: updatedForm.gender ?? userProfile.gender,
               categories: userProfile.categories,
               brands: userProfile.brands,
               items: userProfile.items,

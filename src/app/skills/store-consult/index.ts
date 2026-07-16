@@ -1,9 +1,10 @@
 import type { Skill } from "../../agent/types";
-import type { BrandCard } from "../../types";
+import type { BrandCard, UserProfile } from "../../types";
 import { chatCompletion } from "../../llm/client";
 import type { ChatMessage } from "../../llm/types";
 import { brandKeywords, itemKeywords } from "../../utils/preference";
 import { findBrandCoupon } from "../coupon";
+import { getUserSalutation } from "../../utils/salutation";
 import brandCatalogDoc from "../../data/brand-catalog.md?raw";
 
 // ── Module-level chat history reference ───────────────────────────────
@@ -201,14 +202,14 @@ function buildBrandSuggestion(question: string, entry: BrandEntry): string {
 
 // ── LLM-powered answer for brand queries ─────────────────────────────
 
-async function answerWithLLM(userQuestion: string, snippet: string): Promise<string> {
+async function answerWithLLM(userQuestion: string, snippet: string, salutation: string): Promise<string> {
   const messages: ChatMessage[] = [
     {
       role: "system",
       content:
         "你是DTX综合商圈智能管家。你只能基于提供的'品牌知识片段'作答，严禁杜撰。\n"
         + "要求：\n"
-        + "1) 语气自然、轻松热情、有温度，称呼用户为'先生'或'女士'。\n"
+        + `1) 语气自然、轻松热情、有温度；需要称呼时只能使用「${salutation}」且最多一次，不得猜测或改用先生/女士。\n`
         + "2) 内容必须与知识片段一致，不可新增事实。\n"
         + "3) 若用户问新品/到货，列出知识片段中的当季亮点信息。\n"
         + "4) 若知识片段无法覆盖用户问题，直接回复：'抱歉，目前没有该品牌的详细信息，正在帮您联系商场人工台核实。'\n"
@@ -229,9 +230,10 @@ async function answerWithLLM(userQuestion: string, snippet: string): Promise<str
 
 async function recommendWithLLM(
   userQuestion: string,
-  userProfile: { categories: string[]; brands: string[]; items: string[] },
+  userProfile: UserProfile,
 ): Promise<string> {
   const preferenceStr = [...userProfile.categories, ...userProfile.brands, ...userProfile.items].join("、") || "暂无偏好记录";
+  const salutation = getUserSalutation(userProfile);
 
   // Extract gift section from catalog
   const giftSection = brandCatalogDoc.split("## 给礼推荐").pop()?.trim() ?? "";
@@ -242,7 +244,7 @@ async function recommendWithLLM(
       content:
         "你是DTX综合商圈智能管家，根据用户需求推荐好物或挑选礼物。\n"
         + "要求：\n"
-        + "1) 语气自然、轻松热情、有温度，称呼用户为'先生'或'女士'。\n"
+        + `1) 语气自然、轻松热情、有温度；需要称呼时只能使用「${salutation}」且最多一次，不得猜测或改用先生/女士。\n`
         + "2) 根据用户问题判断场景：问好物/生鲜则推荐当季好物；问送礼（520、情人节、生日、纪念日、日常）则挑选礼物。基于'推荐参考'和'用户偏好'给出 3-5 个推荐，覆盖轻奢、生活方式、餐饮体验等不同预算档次。\n"
         + "3) 优先考虑用户已有偏好的品牌，但也给出日常实惠的选项。\n"
         + "4) 每个推荐格式：序号. 品牌/商品（楼层）— 内容，简要理由\n"
@@ -367,7 +369,7 @@ export const storeConsultSkill: Skill = {
       const fullQuestion = contextBrand && !directBrand
         ? `${matchedBrand.name}：${text}`
         : text;
-      const answer = await answerWithLLM(fullQuestion, snippet);
+      const answer = await answerWithLLM(fullQuestion, snippet, getUserSalutation(userProfile));
       const suggestion = buildBrandSuggestion(text, matchedBrand);
 
       const tag = /新品|新款|到货|到了什么/.test(text) ? "本季新品" : undefined;

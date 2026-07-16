@@ -3,6 +3,7 @@ import type { RestaurantCard } from "../../types";
 import { RESTAURANTS, CUISINE_CATEGORIES, type Restaurant } from "../../data/restaurants";
 import { chatCompletion } from "../../llm/client";
 import type { ChatMessage } from "../../llm/types";
+import { getUserSalutation } from "../../utils/salutation";
 
 /**
  * 餐饮推荐 skill —— 编辑型纯文字回复
@@ -90,6 +91,7 @@ async function rewriteRecommendation(
   userText: string,
   cuisine: string,
   restaurants: Restaurant[],
+  salutation: string,
 ): Promise<string> {
   const digest = buildDigest(restaurants);
   const promptLead = cuisine === "随便"
@@ -102,7 +104,7 @@ async function rewriteRecommendation(
       content:
         "你是DTX综合商圈的智能管家,负责餐饮推荐。\n"
         + "要求：\n"
-        + "1) 称呼用户「先生」或「女士」,语气自然热情、像朋友推荐好去处一样。\n"
+        + `1) 需要称呼时只能使用「${salutation}」且最多一次,不得猜测或改用先生/女士。语气自然热情、像朋友推荐好去处一样。\n`
         + "2) 严格基于提供的餐厅数据,不杜撰店名、菜品、楼层、价格。\n"
         + "3) 回复是简短的推荐话术:说明为他挑了几家、大致适合什么场景即可。\n"
         + "4) 重要:不要展开每家餐厅的推荐理由、特色、招牌菜、人均——这些信息下方推荐卡片已经展示,话术里重复就是啰嗦。只需要一句话带过,把细节留给卡片。\n"
@@ -128,14 +130,15 @@ export const restaurantRecommendSkill: Skill = {
   intentDescription:
     "餐饮/餐厅推荐专属。当用户问美食推荐、想吃什么、今天吃什么、求推荐餐厅时调用。若用户未说想吃的类型,先引导用户说出菜系/口味;用户说'随便'则按今日精选推荐。注:纯查餐厅位置/服务台/退换货等非推荐场景仍走 service-qa。",
   match: () => true,
-  handle: async ({ text, toolArgs }) => {
+  handle: async ({ text, toolArgs, userProfile }) => {
     const cuisine = detectCuisine(text, String(toolArgs?.cuisine ?? ""));
+    const salutation = getUserSalutation(userProfile);
 
     // ── 未表达口味(且未说随便)→ 纯问句引导 ─────────────────────
     if (!cuisine) {
       return {
         text:
-          "先生,这就帮您推荐!想先听听您的口味——今天想吃中餐、粤菜、火锅,还是西餐、日料、小吃快餐?要是拿不定主意,跟我说「随便」也行,我按今日精选给您挑几家。",
+          `${salutation},这就帮您推荐!想先听听您的口味——今天想吃中餐、粤菜、火锅,还是西餐、日料、小吃快餐?要是拿不定主意,跟我说「随便」也行,我按今日精选给您挑几家。`,
         quickReplies: ["中餐", "火锅", "随便", "西餐"],
       };
     }
@@ -143,7 +146,7 @@ export const restaurantRecommendSkill: Skill = {
     // ── 随便 → 今日精选 ──────────────────────────────────────
     if (cuisine === "随便") {
       const picks = pickTodayPicks();
-      const reply = await rewriteRecommendation(text, "随便", picks);
+      const reply = await rewriteRecommendation(text, "随便", picks, salutation);
       return {
         text: reply,
         quickReplies: ["帮我排海底捞", "想换个口味", "查询停车状态"],
@@ -157,12 +160,12 @@ export const restaurantRecommendSkill: Skill = {
     if (matched.length === 0) {
       return {
         text:
-          `先生,商场目前「${cuisine}」类别的餐厅暂时没有收录,要不换换口味?我给您列几个选择:中餐、粤菜、火锅、西餐、小吃快餐、茶饮咖啡都有,或者直接说「随便」我按今日精选推荐。`,
+          `${salutation},商场目前「${cuisine}」类别的餐厅暂时没有收录,要不换换口味?我给您列几个选择:中餐、粤菜、火锅、西餐、小吃快餐、茶饮咖啡都有,或者直接说「随便」我按今日精选推荐。`,
         quickReplies: ["随便", "中餐", "火锅", "粤菜"],
       };
     }
 
-    const reply = await rewriteRecommendation(text, cuisine, matched);
+    const reply = await rewriteRecommendation(text, cuisine, matched, salutation);
     const firstBrand = matched[0].name;
     return {
       text: reply,

@@ -3,6 +3,7 @@ import type { UserProfile } from "../../types";
 import { ACTIVITIES, type Activity } from "../../data/activities";
 import { chatCompletion } from "../../llm/client";
 import type { ChatMessage } from "../../llm/types";
+import { getUserSalutation } from "../../utils/salutation";
 
 /**
  * 根据用户画像计算匹配分，返回按相关性排序的活动列表。
@@ -46,6 +47,7 @@ async function rewriteRecommendation(
   digest: string,
 ): Promise<string> {
   const prefSummary = [...profile.categories, ...profile.brands, ...profile.items].join("、");
+  const salutation = getUserSalutation(profile);
 
   const messages: ChatMessage[] = [
     {
@@ -54,7 +56,7 @@ async function rewriteRecommendation(
         "你是DTX综合商圈的智能管家。根据用户画像和匹配到的活动，撰写一段个性化活动推荐。\n"
         + "要求：\n"
         + "1) 开头以轻松自然的方式引入，如「今天的活动挺多，这几个您可能会感兴趣」，不要用生硬的推荐列表式开头。\n"
-        + "2) 称呼用户为「先生」或「女士」，语气轻松热情、有温度，像朋友间推荐好去处一样自然。\n"
+        + `2) 需要称呼时只能使用「${salutation}」且最多一次，不得猜测或改用先生/女士。语气轻松热情、有温度。\n`
         + "3) 活动按匹配度从高到低排列，优先详细介绍排名靠前的活动，靠后的可简略带过或省略。\n"
         + "4) 每个活动说清：是什么、为什么觉得用户会感兴趣（自然地和偏好关联，不要说'因为您偏好XX'这种机械话术），以及地点和时间。\n"
         + "5) 结尾询问是否需要安排预约或到店体验。\n"
@@ -105,7 +107,7 @@ export const activityRecommendSkill: Skill = {
           role: "system",
           content:
             "你是DTX综合商圈的智能管家。根据活动列表撰写简要活动推荐。\n"
-            + "要求：\n1) 称呼用户为「先生」或「女士」，语气轻松热情。\n2) 列出当前活动，每条一句话概述。\n3) 结尾建议用户告诉我偏好，以便精准推荐。",
+            + `要求：\n1) 需要称呼时只能使用「${getUserSalutation(userProfile)}」且最多一次，不得猜测性别。\n2) 列出当前活动，每条一句话概述。\n3) 结尾建议用户告诉我偏好，以便精准推荐。`,
         },
         { role: "user", content: `用户问题：${text}\n\n活动列表：\n${allDigest}` },
       ];
@@ -130,7 +132,7 @@ export const activityRecommendSkill: Skill = {
 
     if (matched.length === 0) {
       return {
-        text: "李先生，目前暂无与您偏好直接相关的活动。商场新一轮活动正在筹备中，我会第一时间通知您。",
+        text: `${getUserSalutation(userProfile)}，目前暂无与您偏好直接相关的活动。商场新一轮活动正在筹备中，我会第一时间通知您。`,
         quickReplies: ["查看全部活动", "告诉我新活动", "查询停车状态"],
       };
     }
