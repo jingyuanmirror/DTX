@@ -40,6 +40,7 @@ export const brandKeywords: Record<string, string[]> = {
   无印良品: ["无印", "muji"],
   宜家: ["宜家", "ikea"],
   乐高: ["乐高", "lego"],
+  屈臣氏: ["屈臣氏", "watsons", "watson's"],
 };
 
 export const itemKeywords: Record<string, string[]> = {

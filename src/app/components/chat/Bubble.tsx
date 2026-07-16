@@ -83,8 +83,8 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
           )}
           {isAgent && msg.reservationCard && <ReservationCardBubble card={msg.reservationCard} />}
           {isAgent && msg.queueCard && <QueueCardBubble card={msg.queueCard} />}
-          {isAgent && !msg.checkInCard && msg.coupons && msg.coupons.map((coupon) => <CouponCardBubble key={`${coupon.brand}-${coupon.discount}`} coupon={coupon} onUse={() => onQuickReply(`领取${coupon.brand}优惠券`)} />)}
           {isAgent && msg.brandCards && <BrandCardCarousel cards={msg.brandCards} />}
+          {isAgent && !msg.checkInCard && msg.coupons && msg.coupons.map((coupon) => <CouponCardBubble key={`${coupon.brand}-${coupon.discount}`} coupon={coupon} onUse={() => onQuickReply(`领取${coupon.brand}优惠券`)} />)}
           {isAgent && msg.restaurantCards && <RestaurantCardCarousel cards={msg.restaurantCards} />}
           {isAgent && msg.appointmentCard && <AppointmentCardBubble card={msg.appointmentCard} />}
           {isAgent && msg.checkInCard && <CheckInCardBubble card={msg.checkInCard} />}

@@ -3,6 +3,7 @@ import type { BrandCard } from "../../types";
 import { chatCompletion } from "../../llm/client";
 import type { ChatMessage } from "../../llm/types";
 import { brandKeywords, itemKeywords } from "../../utils/preference";
+import { findBrandCoupon } from "../coupon";
 import brandCatalogDoc from "../../data/brand-catalog.md?raw";
 
 // ── Module-level chat history reference ───────────────────────────────
@@ -371,11 +372,15 @@ export const storeConsultSkill: Skill = {
 
       const tag = /新品|新款|到货|到了什么/.test(text) ? "本季新品" : undefined;
       const showCard = shouldShowBrandCard(matchedBrand.name);
+      const brandCoupon = findBrandCoupon(matchedBrand.name);
 
       return {
         text: answer + suggestion,
-        quickReplies: [`帮我预约${matchedBrand.name}`, "查看本季新品", "联系专属SA"],
+        quickReplies: brandCoupon
+          ? [`领取${matchedBrand.name}优惠券`, "查看本季新品", "看看其他优惠"]
+          : [`帮我预约${matchedBrand.name}`, "查看本季新品", "联系专属SA"],
         brandCards: showCard ? [buildBrandCard(matchedBrand, tag)] : undefined,
+        coupons: brandCoupon ? [brandCoupon] : undefined,
       };
     }
 

@@ -24,23 +24,27 @@ const COUPON_DB: CouponDef[] = [
   { brand: "Louis Vuitton", discount: "专属预览", title: "VIP新品预约券", validUntil: "2026.08.15", scope: "brand", triggers: ["louis vuitton", "lv", "路易威登"] },
   { brand: "Cartier", discount: "满5000减500", title: "高珠臻品券", validUntil: "2026.07.31", scope: "brand", triggers: ["cartier", "卡地亚"] },
   { brand: "La Mer", discount: "满1500减200", title: "护肤臻享券", validUntil: "2026.07.31", scope: "brand", triggers: ["la mer", "海蓝之谜"] },
+  { brand: "屈臣氏", discount: "3.99元换购", title: "精选面膜换购券", validUntil: "2026.07.31", scope: "brand", triggers: ["屈臣氏", "watsons", "watson's"] },
 ];
+
+export function findBrandCoupon(text: string): CouponCard | undefined {
+  const normalized = text.toLowerCase();
+  const coupon = COUPON_DB.find(
+    (item) => item.scope === "brand" && item.triggers.some((trigger) => normalized.includes(trigger)),
+  );
+  return coupon ? { type: "coupon-card", ...coupon } : undefined;
+}
 
 export const couponSkill: Skill = {
   name: "coupon",
   intentDescription: "处理优惠券与活动咨询，返回商场通用券或品牌专属券信息。",
   match: () => true,
   handle: ({ text }) => {
-    const lowerValue = text.toLowerCase();
-    const matchedBrandCoupon = COUPON_DB.find(
-      (coupon) =>
-        coupon.scope === "brand"
-        && coupon.triggers.some((trigger) => lowerValue.includes(trigger)),
-    );
+    const matchedBrandCoupon = findBrandCoupon(text);
 
     if (matchedBrandCoupon) {
       const mallCoupon = COUPON_DB.find((coupon) => coupon.scope === "mall" && coupon.discount === "9折");
-      const coupons: CouponCard[] = [{ type: "coupon-card", ...matchedBrandCoupon }];
+      const coupons: CouponCard[] = [matchedBrandCoupon];
       if (mallCoupon) {
         coupons.push({ type: "coupon-card", ...mallCoupon });
       }
