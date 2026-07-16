@@ -25,7 +25,7 @@ export default function App() {
   const [queueInfo, setQueueInfo] = useState<QueueInfo | null>(null);
   const [appointmentInfo, setAppointmentInfo] = useState<AppointmentInfo | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>(SIMULATED_USER_PROFILE);
-  const [currentPage, setCurrentPage] = useState<"home" | "parking" | "coupon" | "activity" | "warm-service" | "rental" | "membership">("home");
+  const [currentPage, setCurrentPage] = useState<"mall-home" | "home" | "parking" | "coupon" | "activity" | "warm-service" | "rental" | "membership">("mall-home");
   const [isStreaming, setIsStreaming] = useState(false);
   const [frameScale, setFrameScale] = useState(1);
   const abortRef = useRef<AbortController | null>(null);
@@ -274,7 +274,28 @@ export default function App() {
             transformOrigin: "top left",
           }}
       >
-        {currentPage === "parking" ? (
+        {currentPage === "mall-home" ? (
+          <div className="relative size-full overflow-hidden bg-white">
+            <img
+              src="/home.jpg"
+              alt="DT-X会员服务首页"
+              className="size-full object-contain"
+              draggable={false}
+            />
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.94 }}
+              onClick={() => setCurrentPage("home")}
+              aria-label="打开智能管家"
+              title="打开智能管家"
+              className="absolute right-4 z-20 flex size-14 items-center justify-center rounded-full border-2 border-white bg-white shadow-[0_8px_24px_rgba(91,77,208,0.32)]"
+              style={{ bottom: 92 }}
+            >
+              <CatMascot headOnly className="size-12 rounded-full" />
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-[#8070F0] text-[9px] text-white">✦</span>
+            </motion.button>
+          </div>
+        ) : currentPage === "parking" ? (
           <ParkingPage
             parkingInfo={parkingInfo}
             onBack={() => setCurrentPage("home")}
@@ -294,7 +315,14 @@ export default function App() {
         ) : (
         <>
         <div className="flex-shrink-0 flex items-center justify-between px-5 pt-4 pb-3 relative z-20">
-          <button className="w-8 h-8 flex items-center justify-center text-[#A89D8A] text-lg">‹</button>
+          <button
+            type="button"
+            onClick={() => setCurrentPage("mall-home")}
+            aria-label="返回商城首页"
+            className="w-8 h-8 flex items-center justify-center text-[#A89D8A] text-lg"
+          >
+            ‹
+          </button>
           <div className="flex items-center gap-2">
             <span className="text-[14px] tracking-[0.18em] text-[#20201C]" style={{ fontFamily: "'Cormorant', serif", fontWeight: 500 }}>
               DTX · 专享管家
