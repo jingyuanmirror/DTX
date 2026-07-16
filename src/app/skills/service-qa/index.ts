@@ -2,6 +2,7 @@ import type { Skill } from "../../agent/types";
 import { chatCompletion } from "../../llm/client";
 import type { ChatMessage } from "../../llm/types";
 import mallKnowledgeDoc from "../../data/mall-knowledge.md?raw";
+import { getUserSalutation } from "../../utils/salutation";
 
 interface KnowledgeSection {
   title: string;
@@ -142,14 +143,14 @@ async function retrieveKnowledgeSnippet(query: string): Promise<string | null> {
   return `问题主题：${bestSection.title}\n\n${bestSection.content}`;
 }
 
-async function rewriteWithLLM(userQuestion: string, snippet: string): Promise<string> {
+async function rewriteWithLLM(userQuestion: string, snippet: string, salutation: string): Promise<string> {
   const messages: ChatMessage[] = [
     {
       role: "system",
       content:
         "你是DTX综合商圈专属客服。你只能基于提供的’知识片段’作答，严禁杜撰。\n"
         + "要求：\n"
-        + "1) 语气自然、专业、有温度，称呼用户为’先生’或’女士’，亲切自然。\n"
+        + `1) 语气自然、专业、有温度；需要称呼时只能使用「${salutation}」，且最多出现一次，不得使用“先生/女士”占位。\n`
         + "2) 内容必须与知识片段一致，不可新增事实。\n"
         + "3) 若用户问吃什么/餐厅推荐，按知识片段中的餐厅列出相关选项，涵盖商务宴请、家庭聚餐、快速午餐等不同场景和人均档次，给出菜系和特色，并给一句选择建议。\n"
         + "4) 若知识片段无法覆盖用户问题，直接回复：’抱歉，目前没有相关信息。’\n"
@@ -179,7 +180,7 @@ export const serviceQASkill: Skill = {
   name: "service-qa",
   intentDescription: "处理商场服务咨询（服务台、轮椅、退换货、邮寄、营业时间、失物招领、楼层品牌、店铺位置、会员服务规则等），基于知识库文档回答且不杜撰。注:餐厅推荐/今天吃什么/美食推荐等餐饮推荐场景走 restaurant-recommend。",
   match: () => true,
-  handle: async ({ text }) => {
+  handle: async ({ text, userProfile }) => {
     const mallServiceQuery = await isMallServiceQuery(text);
     if (!mallServiceQuery) {
       return null;
@@ -195,7 +196,7 @@ export const serviceQASkill: Skill = {
     }
 
     try {
-      const refinedText = await rewriteWithLLM(text, snippet);
+      const refinedText = await rewriteWithLLM(text, snippet, getUserSalutation(userProfile));
       return {
         text: refinedText,
         quickReplies: ["还有其他服务吗", "联系人工客服", "我想入会"],

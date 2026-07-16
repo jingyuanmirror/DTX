@@ -1,4 +1,5 @@
 import type { Skill } from "../../agent/types";
+import { getUserSalutation } from "../../utils/salutation";
 import type { CheckInSpotItem, CouponCard } from "../../types";
 
 interface CheckInSpot {
@@ -42,11 +43,11 @@ export const checkInSkill: Skill = {
   intentDescription:
     "用户完成商场打卡活动、说'我已打卡/打卡了/打卡完成/完成打卡'时路由到此,显示打卡成功、发放专项打卡奖励券、推荐其他打卡点并引导到店体验。重要:'签到有礼''每日签到'属于日常签到,不是打卡活动,不要路由到此。",
   match: () => true,
-  handle: async () => {
+  handle: async ({ userProfile }) => {
     const recommendations = pickRecommendations();
     const couponText = `${CHECKIN_COUPON.discount} ${CHECKIN_COUPON.title}`;
 
-    const narration = "先生，打卡成功！原价38元的西班牙拿铁已为您解锁，今天1元换购，数量有限，建议先领取。取完咖啡后，可以顺路去DTX精品超市完成下一站打卡，点亮5个还有额外惊喜。";
+    const narration = `${getUserSalutation(userProfile)}，打卡成功！原价38元的西班牙拿铁已为您解锁，今天1元换购，数量有限，建议先领取。取完咖啡后，可以顺路去DTX精品超市完成下一站打卡，点亮5个还有额外惊喜。`;
 
     return {
       text: narration,

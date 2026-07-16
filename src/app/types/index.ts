@@ -245,6 +245,8 @@ export interface EnrollmentForm {
 }
 
 export interface UserProfile {
+  name?: string;
+  gender?: string;
   categories: string[];
   brands: string[];
   items: string[];
