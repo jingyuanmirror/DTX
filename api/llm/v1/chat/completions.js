@@ -4,10 +4,19 @@
 
 export const config = {
   api: {
-    bodyParser: false,
     responseLimit: false,
   },
 };
+
+function toBody(body) {
+  // Vercel 可能把 req.body 解析成普通 Object;直接交给 fetch 会变成 "[object Object]"。
+  // 在转发前统一序列化:string/Buffer 直传,对象转 JSON。
+  if (body == null) return undefined;
+  if (typeof body === "string") return body;
+  if (typeof Buffer !== "undefined" && Buffer.isBuffer(body)) return body;
+  if (body instanceof Uint8Array) return body;
+  return JSON.stringify(body);
+}
 
 export default async function handler(req, res) {
   try {
@@ -31,9 +40,9 @@ export default async function handler(req, res) {
       method: req.method,
       headers,
     };
-    if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
-      init.body = req.body;
-      init.duplex = "half";
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      const body = toBody(req.body);
+      if (body != null) init.body = body;
     }
 
     const upstream = await fetch(upstreamUrl, init);
