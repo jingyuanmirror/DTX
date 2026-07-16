@@ -1,8 +1,7 @@
 // Vercel Serverless Function —— LLM 透明流式代理
-// 前端调用同源 /api/llm/v1/chat/completions,本函数注入服务器端 LLM_API_KEY 转发到上游。
-// key 仅存在于 Vercel 环境变量,不进源码、不下发给浏览器。
+// 文件路径直接对应前端调用 URL:/api/llm/v1/chat/completions
+// 注入服务器端 LLM_API_KEY 转发到上游,key 不进源码、不下发浏览器。
 
-// 禁用 body 解析,保留原始流式请求体
 export const config = {
   api: {
     bodyParser: false,
@@ -14,9 +13,7 @@ export default async function handler(req, res) {
   try {
     const rawUpstreamBase = process.env.LLM_UPSTREAM_BASE_URL || "https://api.ant-ling.com";
     const upstreamBase = rawUpstreamBase.replace(/\/+$/, "").replace(/\/v1$/i, "");
-    const incomingUrl = req.url || "/api/llm/v1/chat/completions";
-    const upstreamPath = incomingUrl.replace(/^\/api\/llm/, "") || "/v1/chat/completions";
-    const upstreamUrl = `${upstreamBase}${upstreamPath}`;
+    const upstreamUrl = `${upstreamBase}/v1/chat/completions`;
 
     const upstreamApiKey = process.env.LLM_API_KEY || process.env.ANT_LING_API_KEY;
     const headers = {

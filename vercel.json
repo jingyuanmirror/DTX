@@ -1,8 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/llm/[...path].js": {
-      "memory": 512,
+    "api/llm/v1/chat/completions.js": {
       "maxDuration": 60
     }
   }
