@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import type { RestaurantCard } from "../../types";
-import { RestaurantCardBubble } from "./RestaurantCardBubble";
+import type { BrandCard } from "../../types";
+import { BrandCardBubble } from "./BrandCardBubble";
 
-export function RestaurantCardCarousel({ cards }: { cards: RestaurantCard[] }) {
+export function BrandCardCarousel({ cards }: { cards: BrandCard[] }) {
   const railRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -18,19 +18,15 @@ export function RestaurantCardCarousel({ cards }: { cards: RestaurantCard[] }) {
   };
 
   if (cards.length === 1) {
-    return <div className="mt-2.5"><RestaurantCardBubble card={cards[0]} /></div>;
+    return <div className="mt-2.5"><BrandCardBubble card={cards[0]} /></div>;
   }
 
   return (
-    <section className="mt-2.5" aria-label={`餐厅推荐，共${cards.length}家`}>
-      <div
-        ref={railRef}
-        onScroll={updateActiveCard}
-        className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
+    <section className="mt-2.5" aria-label={`品牌推荐，共${cards.length}个`}>
+      <div ref={railRef} onScroll={updateActiveCard} className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {cards.map((card) => (
-          <div key={`${card.name}-${card.floor}`} className="w-full shrink-0 snap-center">
-            <RestaurantCardBubble card={card} />
+          <div key={`${card.brand}-${card.floor}`} className="w-full shrink-0 snap-center">
+            <BrandCardBubble card={card} />
           </div>
         ))}
       </div>
@@ -38,10 +34,7 @@ export function RestaurantCardCarousel({ cards }: { cards: RestaurantCard[] }) {
       <div className="mt-2 flex h-5 items-center justify-center">
         <div className="flex items-center gap-1" aria-label={`第${activeIndex + 1}张，共${cards.length}张`}>
           {cards.map((card, index) => (
-            <span
-              key={card.name}
-              className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-3 bg-[#8070F0]" : "w-1.5 bg-[#D8D1C7]"}`}
-            />
+            <span key={card.brand} className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-3 bg-[#8070F0]" : "w-1.5 bg-[#D8D1C7]"}`} />
           ))}
         </div>
       </div>

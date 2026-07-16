@@ -1,101 +1,60 @@
 import { motion } from "motion/react";
-import { MapPin } from "lucide-react";
+import { MapPin, Sparkles } from "lucide-react";
 import type { BrandCard } from "../../types";
 
 export function BrandCardBubble({ card }: { card: BrandCard }) {
-  const scopeLabel =
-    card.tag === "本季新品"
-      ? "本季新品"
-      : card.highlight
-        ? "热销品牌"
-        : undefined;
+  const scopeLabel = card.tag === "本季新品" ? "本季新品" : card.highlight ? "热销品牌" : undefined;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16, scale: 0.95 }}
+    <motion.section
+      initial={{ opacity: 0, y: 16, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden mt-2.5 mx-1"
-      style={{
-        width: "100%",
-        maxWidth: 300,
-        borderRadius: 14,
-        background: "#FFFFFF",
-        border: "1px solid rgba(240,176,64,0.16)",
-        boxShadow: "0 4px 20px rgba(42,37,32,0.08), 0 1px 4px rgba(42,37,32,0.04)",
-      }}
+      transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      className="flex h-full w-full overflow-hidden rounded-[8px] border border-[#E8E3D8] bg-white"
+      style={{ boxShadow: "0 1px 2px rgba(42,37,32,0.04)" }}
     >
-      {/* Header */}
-      <div
-        className="px-4 pt-4 pb-3"
-        style={{
-          background: "linear-gradient(135deg, #FFF8EE 0%, #FFF0DC 100%)",
-          borderBottom: "1px solid rgba(240,176,64,0.12)",
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-[13px]" style={{ color: "#F0B040" }}>✦</span>
-            <span className="text-[11px] tracking-wide text-[#20201C]" style={{ fontWeight: 500 }}>
-              品牌咨询
-            </span>
-          </div>
+      <div className="w-1 shrink-0 self-stretch bg-gradient-to-b from-[#8070F0] to-[#5B4DD0]" />
+
+      <div className="min-w-0 flex-1">
+        <header className="flex items-center justify-between border-b border-[#F0EBE0] bg-[#FAF9F6] px-4 py-3">
+          <span className="text-[10px] font-medium text-[#7C7467]">品牌咨询</span>
           {scopeLabel && (
-            <span
-              className="text-[9px] tracking-wider px-2 py-0.5 rounded-full"
-              style={{
-                background: "rgba(76,175,142,0.12)",
-                color: "#3E9C7E",
-                border: "1px solid rgba(76,175,142,0.25)",
-              }}
-            >
+            <span className="rounded-full border border-[rgba(91,77,208,0.16)] bg-[rgba(91,77,208,0.08)] px-2 py-0.5 text-[9px] text-[#5B4DD0]">
               {scopeLabel}
             </span>
           )}
-        </div>
-      </div>
+        </header>
 
-      {/* Body */}
-      <div className="px-4 py-3.5">
-        {/* Brand name & floor */}
-        <p className="text-[16px] text-[#20201C] mb-1.5" style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>
-          {card.brand}
-        </p>
-        <div className="flex items-center gap-1.5 mb-3">
-          <MapPin size={12} strokeWidth={1.8} color="#A89D8A" />
-          <span className="text-[11px] text-[#A89D8A] tracking-wide">{card.floor}</span>
-        </div>
-
-        {/* Category tags */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {card.categories.map((cat) => (
-            <span
-              key={cat}
-              className="text-[9px] tracking-wider px-2 py-0.5 rounded-full"
-              style={{
-                background: "rgba(240,176,64,0.1)",
-                color: "#C8841E",
-                border: "1px solid rgba(240,176,64,0.18)",
-              }}
-            >
-              {cat}
-            </span>
-          ))}
-        </div>
-
-        {/* Highlight */}
-        {card.highlight && (
-          <div
-            className="px-3 py-2 rounded-[8px]"
-            style={{ background: "#FFFAF0", border: "1px solid rgba(240,176,64,0.1)" }}
-          >
-            <p className="text-[9px] tracking-wider text-[#A89D8A] mb-1">★ 当季亮点</p>
-            <p className="text-[11px] text-[#20201C] leading-[1.55]" style={{ fontWeight: 400 }}>
-              {card.highlight}
-            </p>
+        <div className="px-4 py-4">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <h3 className="min-w-0 truncate text-[20px] leading-none text-[#20201C]" style={{ fontFamily: "'Noto Serif SC', serif", fontWeight: 500 }}>
+              {card.brand}
+            </h3>
+            <div className="flex shrink-0 items-center gap-1 text-[#A89D8A]">
+              <MapPin size={11} strokeWidth={1.5} />
+              <span className="text-[9px]" style={{ fontFamily: "'DM Mono', monospace" }}>{card.floor}</span>
+            </div>
           </div>
-        )}
+
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {card.categories.map((category) => (
+              <span key={category} className="rounded-full border border-[rgba(91,77,208,0.16)] bg-[rgba(91,77,208,0.08)] px-2 py-0.5 text-[9px] text-[#5B4DD0]">
+                {category}
+              </span>
+            ))}
+          </div>
+
+          {card.highlight && (
+            <div className="border-t border-[#F0EBE0] pt-3">
+              <div className="mb-1.5 flex items-center gap-1.5 text-[#7C6FE0]">
+                <Sparkles size={11} strokeWidth={2} />
+                <span className="text-[9px]">当季亮点</span>
+              </div>
+              <p className="text-[11px] leading-[1.6] text-[#20201C]">{card.highlight}</p>
+            </div>
+          )}
+        </div>
       </div>
-    </motion.div>
+    </motion.section>
   );
 }
