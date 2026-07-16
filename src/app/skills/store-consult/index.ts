@@ -179,6 +179,25 @@ function buildBrandCard(entry: BrandEntry, tag?: string): BrandCard {
   };
 }
 
+function buildBrandSuggestion(question: string, entry: BrandEntry): string {
+  const asksForLocation = /在哪|位置|几楼|哪层|怎么走/.test(question);
+  const asksForNewArrivals = /新品|新款|到货|亮点|活动/.test(question);
+  const supportsBooking = entry.saBooking.includes("支持");
+
+  if (asksForLocation) {
+    const featuredArrival = entry.highlight.split(/[、，]/)[0]?.trim();
+    const arrivalHint = featuredArrival ? `另外，${entry.name} 本季有 ${featuredArrival}` : "";
+    const bookingHint = supportsBooking ? "，需要的话我可以帮您预约到店。" : "。";
+    return arrivalHint ? `\n\n${arrivalHint}${bookingHint}` : supportsBooking ? `\n\n需要的话，我也可以帮您预约 ${entry.name} 到店。` : "";
+  }
+
+  if (asksForNewArrivals && supportsBooking) {
+    return `\n\n如果有感兴趣的款式，我可以继续帮您预约 ${entry.name} 的 SA。`;
+  }
+
+  return "";
+}
+
 // ── LLM-powered answer for brand queries ─────────────────────────────
 
 async function answerWithLLM(userQuestion: string, snippet: string): Promise<string> {
@@ -348,12 +367,13 @@ export const storeConsultSkill: Skill = {
         ? `${matchedBrand.name}：${text}`
         : text;
       const answer = await answerWithLLM(fullQuestion, snippet);
+      const suggestion = buildBrandSuggestion(text, matchedBrand);
 
       const tag = /新品|新款|到货|到了什么/.test(text) ? "本季新品" : undefined;
       const showCard = shouldShowBrandCard(matchedBrand.name);
 
       return {
-        text: answer,
+        text: answer + suggestion,
         quickReplies: [`帮我预约${matchedBrand.name}`, "查看本季新品", "联系专属SA"],
         brandCards: showCard ? [buildBrandCard(matchedBrand, tag)] : undefined,
       };
