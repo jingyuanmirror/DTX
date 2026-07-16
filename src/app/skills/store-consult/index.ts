@@ -331,15 +331,9 @@ export const storeConsultSkill: Skill = {
         : undefined;
       const hasAnyCards = brandCards && brandCards.length > 0;
 
-      const memberHint = !userProfile.isMember
-        ? "\n\n另外提醒您，DTX 会员可享消费积分、停车优惠及部分新品到货提醒，是否需要为您办理入会？"
-        : "";
-
       return {
-        text: recommendation + memberHint,
-        quickReplies: !userProfile.isMember
-          ? ["我想入会", "帮我预约档期", "稍后再说"]
-          : ["帮我预约档期", "帮我预留车位", "联系专属SA"],
+        text: recommendation,
+        quickReplies: ["帮我预约档期", "帮我预留车位", "联系专属SA"],
         brandCards: hasAnyCards ? brandCards : undefined,
       };
     }
@@ -358,15 +352,9 @@ export const storeConsultSkill: Skill = {
       const tag = /新品|新款|到货|到了什么/.test(text) ? "本季新品" : undefined;
       const showCard = shouldShowBrandCard(matchedBrand.name);
 
-      const memberHint = !userProfile.isMember
-        ? `\n\n另外提醒您，DTX 会员可享消费积分、停车优惠及部分新品到货提醒，是否需要为您办理入会？`
-        : "";
-
       return {
-        text: answer + memberHint,
-        quickReplies: !userProfile.isMember
-          ? ["我想入会", `帮我预约${matchedBrand.name}`, "稍后再说"]
-          : [`帮我预约${matchedBrand.name}`, "帮我预留车位", "联系专属SA"],
+        text: answer,
+        quickReplies: [`帮我预约${matchedBrand.name}`, "查看本季新品", "联系专属SA"],
         brandCards: showCard ? [buildBrandCard(matchedBrand, tag)] : undefined,
       };
     }
@@ -395,15 +383,9 @@ export const storeConsultSkill: Skill = {
           .filter((e) => shouldShowBrandCard(e.name))
           .map((e) => buildBrandCard(e));
 
-        const memberHint = !userProfile.isMember
-          ? "\n\n另外提醒您，DTX 会员可享消费积分、停车优惠及部分新品到货提醒，是否需要为您办理入会？"
-          : "";
-
         return {
-          text: `关于${matchedItems.join("、")}，为您推荐以下品牌：\n\n${brandList}\n\n如需我为您安排试看或预约 SA，随时告诉我。${memberHint}`,
-          quickReplies: !userProfile.isMember
-            ? ["我想入会", `帮我预约${relevantBrands[0].name}`, "稍后再说"]
-            : [`帮我预约${relevantBrands[0].name}`, "帮我预留车位", "联系专属SA"],
+          text: `关于${matchedItems.join("、")}，为您推荐以下品牌：\n\n${brandList}\n\n如需我为您安排试看或预约 SA，随时告诉我。`,
+          quickReplies: [`帮我预约${relevantBrands[0].name}`, "帮我预留车位", "联系专属SA"],
           brandCards: brandCards.length > 0 ? brandCards : undefined,
         };
       }
