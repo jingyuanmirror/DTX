@@ -315,14 +315,17 @@ export default function App() {
             className="relative w-full flex items-stretch overflow-hidden"
             style={{
               height: 172,
-              background: "linear-gradient(110deg, #FFF7EC 0%, #F6E0C2 100%)",
+              background: "linear-gradient(120deg, #F4E6CF 0%, #ECD8B9 48%, #E8D3B4 100%)",
             }}
           >
+            {/* 丝绒质感:质感光晕 + 斜纹丝绒纹理,营造香槟金轻奢氛围 */}
+            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(120% 80% at 18% 0%, rgba(255,250,235,0.4) 0%, rgba(255,255,255,0) 50%)" }} />
+            <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "repeating-linear-gradient(120deg, rgba(200,150,70,0.5) 0px, rgba(200,150,70,0.5) 0.5px, transparent 0.5px, transparent 4px)", opacity: 0.18, mixBlendMode: "overlay" }} />
             <div className="relative z-10 flex flex-col justify-center pl-6 pr-2 flex-1">
               <p className="text-[10px] tracking-[0.22em] text-[#F0B040] uppercase mb-3" style={{ letterSpacing: "0.2em", fontFamily: "'DM Sans', sans-serif" }}>
                 DTX · CONCIERGE
               </p>
-              <p className="text-[26px] leading-tight text-[#20201C] mb-4 whitespace-nowrap" style={{ fontFamily: "'Cormorant', serif", fontWeight: 500 }}>
+              <p className="text-[26px] leading-[1.15] text-[#20201C] mb-4 whitespace-nowrap" style={{ fontFamily: "'Cormorant', serif", fontWeight: 500, letterSpacing: "0.04em" }}>
                 早上好，李先生
               </p>
               <div className="flex items-center gap-1.5">
@@ -332,16 +335,17 @@ export default function App() {
                 </span>
               </div>
 
-              <div className="mt-5 self-start flex items-center gap-1.5 px-2.5 h-5 rounded-full" style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(240,176,64,0.3)" }}>
-                <span className="text-[8px] text-[#A89D8A] tracking-wider">积分余额</span>
-                <span className="text-[10px] text-[#F0B040]" style={{ fontFamily: "'DM Mono', monospace", fontWeight: 400 }}>
-                  {userProfile.isMember ? "128,400" : "未开通"}
+              <div className="mt-5 self-start flex items-center gap-1.5 px-3 h-6 rounded-full" style={{ background: "rgba(255,255,255,0.42)", border: "1px solid rgba(255,255,255,0.55)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 2px rgba(120,90,40,0.06)", backdropFilter: "blur(6px)" }}>
+                <span className="text-[8px] text-[#8C7A5C] tracking-wider">
+                  {userProfile.isMember ? "积分余额" : "会员权益"}
+                </span>
+                <span className="text-[10px]" style={{ color: userProfile.isMember ? "#B8893A" : "#7C6FE0", fontFamily: userProfile.isMember ? "'DM Mono', monospace" : "'DM Sans', sans-serif", fontWeight: 500 }}>
+                  {userProfile.isMember ? "128,400" : "立即激活"}
                 </span>
               </div>
             </div>
 
             <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 168 }}>
-              <div className="absolute inset-y-0 left-0 w-16 z-10" style={{ background: "linear-gradient(to right, #F6E0C2, transparent)" }} />
               <CatMascot
                 className="relative z-10"
                 style={{ width: 150, height: 150, marginRight: 8 }}
@@ -393,6 +397,7 @@ export default function App() {
                 <motion.div key="typing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex gap-2.5">
                   <CatMascot
                     withBackground
+                    headOnly
                     className="flex-shrink-0 w-8 h-8 rounded-full"
                     style={{ border: "1px solid rgba(240,176,64,0.3)" }}
                   />

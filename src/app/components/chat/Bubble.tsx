@@ -33,6 +33,7 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
         {isAgent && (
           <CatMascot
             withBackground
+            headOnly
             className="flex-shrink-0 mt-0.5 w-8 h-8 rounded-full"
             style={{ border: "1px solid rgba(240,176,64,0.3)" }}
           />
