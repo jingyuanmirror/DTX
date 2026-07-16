@@ -1,7 +1,7 @@
 import type { ToolDefinition } from "../types";
 
 /**
- * 8 tools — 1:1 对应 8 个 skill。
+ * tools — 1:1 对应每个 skill。
  * LLM 根据用户意图选择调用哪个 tool，tool 的参数直接传给 skill.handle()。
  */
 export const toolDefinitions: ToolDefinition[] = [
@@ -118,7 +118,7 @@ export const toolDefinitions: ToolDefinition[] = [
     function: {
       name: "activity-recommend",
       description:
-        "根据用户画像（品牌/品类/商品偏好）个性化推荐商场活动。当用户询问商场活动、pop-up、展览、鉴赏会、联名活动等，或问'今天有什么活动'、'推荐活动'时调用。会根据用户已记录的偏好进行精准匹配推荐。",
+        "根据用户画像（品牌/品类/商品偏好）个性化推荐商场活动。仅当用户询问**商场内**活动、pop-up、展览、鉴赏会、联名活动等（如'今天有什么活动'、'推荐活动'）时调用。注意：'北京有什么好玩的'、'推荐景点'、'周末去哪玩'等城市级去处不属于商场活动，不要调用此工具，由模型直接自然回复即可。",
       parameters: {
         type: "object",
         properties: {
@@ -143,6 +143,50 @@ export const toolDefinitions: ToolDefinition[] = [
           text: {
             type: "string",
             description: "用户关于品牌咨询的原始表述，如'Chanel有什么新款包'或'推荐送礼品牌'",
+          },
+        },
+        required: ["text"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "weather",
+      description:
+        "查询城市天气。当用户询问某地天气（如'上海天气怎样'、'北京今天热吗'、'明天会下雨吗'、'出门需要带伞吗'）时调用。城市名尽量从用户原话中提取，填入 city 参数；用户未指定城市时 city 留空（默认商场所在地）。",
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
+            type: "string",
+            description: "用户关于天气的原始表述，如'上海天气怎样'或'明天会下雨吗'",
+          },
+          city: {
+            type: "string",
+            description: "要查询天气的城市名（中文），如'上海'、'北京'、'杭州'。用户未指定时留空。",
+          },
+        },
+        required: ["text"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "restaurant-recommend",
+      description:
+        "餐饮/餐厅推荐专属。当用户问美食推荐、想吃什么、今天吃什么、求推荐餐厅（如'有什么美食推荐'、'今天吃什么'、'推荐个餐厅'、'有什么好吃的'）时调用。若用户已说出想吃的菜系/口味（中餐、粤菜、火锅、西餐、日料、小吃快餐、茶饮咖啡），填入 cuisine 参数；用户说'随便''都行'也调用（cuisine 填'随便'）；用户未表达口味时 cuisine 留空，skill 会先引导用户说出类型。\n重要：纯查询餐厅楼层位置、服务台、退换货、营业时间等非「推荐」场景，走 service-qa，不要用此工具。",
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
+            type: "string",
+            description: "用户关于美食推荐的原话，如'有什么美食推荐'或'想吃火锅'",
+          },
+          cuisine: {
+            type: "string",
+            description: "用户表达的菜系/口味，可选值：中餐、粤菜、火锅、西餐、日料、小吃快餐、茶饮咖啡、随便。用户未明确说出口味时留空。",
           },
         },
         required: ["text"],

@@ -70,6 +70,7 @@ export async function chat(
   let collectedQueueCard: AgentResponse["queueCard"] = undefined;
   let collectedReservationCard: AgentResponse["reservationCard"] = undefined;
   let collectedBrandCards: AgentResponse["brandCards"] = undefined;
+  let collectedRestaurantCards: AgentResponse["restaurantCards"] = undefined;
   let collectedAppointmentCard: AgentResponse["appointmentCard"] = undefined;
 
   const newMessages: ChatMessage[] = [{ role: "user", content: userText }];
@@ -110,6 +111,7 @@ export async function chat(
         coupons: collectedCoupons,
         queueCard: collectedQueueCard,
         brandCards: collectedBrandCards,
+        restaurantCards: collectedRestaurantCards,
         appointmentCard: collectedAppointmentCard,
       };
 
@@ -176,6 +178,7 @@ export async function chat(
       if (toolResult.queueCard) collectedQueueCard = toolResult.queueCard;
       if (toolResult.reservationCard) collectedReservationCard = toolResult.reservationCard;
       if (toolResult.brandCards) collectedBrandCards = toolResult.brandCards;
+      if (toolResult.restaurantCards) collectedRestaurantCards = toolResult.restaurantCards;
       if (toolResult.appointmentCard) collectedAppointmentCard = toolResult.appointmentCard;
 
       // If a card was returned, short-circuit: use the tool's reply directly
@@ -183,7 +186,7 @@ export async function chat(
         || toolResult.parkingCard || toolResult.parkingShoppingGuideCard || toolResult.activityIntroCard
         || toolResult.productIntroCard || toolResult.queueCard
         || toolResult.reservationCard || toolResult.coupons || toolResult.brandCards
-        || toolResult.appointmentCard;
+        || toolResult.restaurantCards || toolResult.appointmentCard;
       if (hasCard) {
         shouldShortCircuit = true;
         const data = toolResult.data as { reply?: string; quickReplies?: string[] };
@@ -217,6 +220,7 @@ export async function chat(
         coupons: collectedCoupons,
         queueCard: collectedQueueCard,
         brandCards: collectedBrandCards,
+        restaurantCards: collectedRestaurantCards,
         appointmentCard: collectedAppointmentCard,
       };
       if (Object.keys(collectedSideEffects).length > 0) {
@@ -247,6 +251,7 @@ export async function chat(
       coupons: collectedCoupons,
       queueCard: collectedQueueCard,
       brandCards: collectedBrandCards,
+      restaurantCards: collectedRestaurantCards,
       appointmentCard: collectedAppointmentCard,
     },
     newMessages,

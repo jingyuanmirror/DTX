@@ -120,6 +120,19 @@ export interface BrandCard {
   tag?: string;
 }
 
+export interface RestaurantCard {
+  type: "restaurant-card";
+  name: string;
+  floor: string;
+  cuisineType: string;
+  priceRange: string;
+  highlight: string;
+  recommendation: string[];
+  tags?: string[];
+  tip?: string;
+  image?: string;
+}
+
 export interface AppointmentInfo {
   type: "appointment";
   brand: string;
@@ -181,6 +194,7 @@ export interface Message {
   coupons?: CouponCard[];
   queueCard?: QueueCard;
   brandCards?: BrandCard[];
+  restaurantCards?: RestaurantCard[];
   reservationCard?: ReservationCard;
   appointmentCard?: AppointmentCard;
   checkInCard?: CheckInCard;

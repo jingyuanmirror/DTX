@@ -1,5 +1,5 @@
 import type { AgentSideEffects, SkillContext } from "../../agent/types";
-import type { ActivityIntroCard, AppointmentCard, BrandCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingShoppingGuideCard, ProductIntroCard, CouponCard, QueueCard, ReservationCard } from "../../types";
+import type { ActivityIntroCard, AppointmentCard, BrandCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingShoppingGuideCard, ProductIntroCard, CouponCard, QueueCard, ReservationCard, RestaurantCard } from "../../types";
 import { skills } from "../../skills";
 
 export interface ToolResult {
@@ -16,6 +16,7 @@ export interface ToolResult {
   coupons?: CouponCard[];
   queueCard?: QueueCard;
   brandCards?: BrandCard[];
+  restaurantCards?: RestaurantCard[];
   appointmentCard?: AppointmentCard;
 }
 
@@ -34,10 +35,14 @@ export function executeTool(
     return Promise.resolve({ data: { error: `Unknown tool: ${toolName}` } });
   }
 
-  // Build a modified context where text comes from the tool argument
+  // Build a modified context where text comes from the tool argument.
+  // Pass the full args through `toolArgs` so skills that need structured
+  // parameters (e.g. weather's `city`) can read them; existing skills
+  // only read `text` and are unaffected.
   const toolCtx: SkillContext = {
     ...ctx,
     text: String(args.text ?? ""),
+    toolArgs: args,
   };
 
   // Execute the skill's handle() directly
@@ -65,6 +70,7 @@ export function executeTool(
       coupons: response.coupons,
       queueCard: response.queueCard,
       brandCards: response.brandCards,
+      restaurantCards: response.restaurantCards,
       appointmentCard: response.appointmentCard,
     };
   });

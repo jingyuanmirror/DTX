@@ -6,6 +6,7 @@ import { ReservationCardBubble } from "../cards/ReservationCardBubble";
 import { QueueCardBubble } from "../cards/QueueCardBubble";
 import { CouponCardBubble } from "../cards/CouponCardBubble";
 import { BrandCardBubble } from "../cards/BrandCardBubble";
+import { RestaurantCardBubble } from "../cards/RestaurantCardBubble";
 import { AppointmentCardBubble } from "../cards/AppointmentCardBubble";
 import { CheckInCardBubble } from "../cards/CheckInCardBubble";
 import { MembershipAuthorizationCardBubble } from "../cards/MembershipAuthorizationCardBubble";
@@ -19,7 +20,7 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
   const isAgent = msg.role === "agent";
   const hasRichCard = Boolean(
     msg.card || msg.parkingCard || msg.reservationCard || msg.queueCard || msg.coupons?.length
-      || msg.brandCards?.length || msg.appointmentCard || msg.checkInCard || msg.membershipAuthorizationCard
+      || msg.brandCards?.length || msg.restaurantCards?.length || msg.appointmentCard || msg.checkInCard || msg.membershipAuthorizationCard
       || msg.newMemberOfferCard || msg.parkingShoppingGuideCard || msg.activityIntroCard || msg.productIntroCard,
   );
 
@@ -84,6 +85,7 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
           {isAgent && msg.queueCard && <QueueCardBubble card={msg.queueCard} />}
           {isAgent && !msg.checkInCard && msg.coupons && msg.coupons.map((coupon) => <CouponCardBubble key={`${coupon.brand}-${coupon.discount}`} coupon={coupon} onUse={() => onQuickReply(`领取${coupon.brand}优惠券`)} />)}
           {isAgent && msg.brandCards && msg.brandCards.map((bc) => <BrandCardBubble key={`${bc.brand}-${bc.floor}`} card={bc} />)}
+          {isAgent && msg.restaurantCards && msg.restaurantCards.map((rc) => <RestaurantCardBubble key={`${rc.name}-${rc.floor}`} card={rc} />)}
           {isAgent && msg.appointmentCard && <AppointmentCardBubble card={msg.appointmentCard} />}
           {isAgent && msg.checkInCard && <CheckInCardBubble card={msg.checkInCard} />}
 

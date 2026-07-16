@@ -191,6 +191,7 @@ export default function App() {
                 coupons: response.coupons,
                 queueCard: response.queueCard,
                 brandCards: response.brandCards,
+                restaurantCards: response.restaurantCards,
                 appointmentCard: response.appointmentCard,
                 checkInCard: response.checkInCard,
                 streaming: false,
