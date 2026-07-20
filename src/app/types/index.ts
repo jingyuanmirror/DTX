@@ -178,6 +178,16 @@ export interface CheckInCard {
   couponHint: string;
 }
 
+/** 专属红包"碰一下"使用流程卡 */
+export interface RedPacketFlowCard {
+  type: "red-packet-flow-card";
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  steps: { icon: string; title: string; desc: string }[];
+  tip: string;
+}
+
 export interface Message {
   id: string;
   role: "agent" | "user";
@@ -198,6 +208,7 @@ export interface Message {
   reservationCard?: ReservationCard;
   appointmentCard?: AppointmentCard;
   checkInCard?: CheckInCard;
+  redPacketFlowCard?: RedPacketFlowCard;
   streaming?: boolean;
 }
 

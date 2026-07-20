@@ -47,7 +47,7 @@ export const checkInSkill: Skill = {
     const recommendations = pickRecommendations();
     const couponText = `${CHECKIN_COUPON.discount} ${CHECKIN_COUPON.title}`;
 
-    const narration = `${getUserSalutation(userProfile)}，打卡成功！原价38元的西班牙拿铁已为您解锁，今天1元换购，数量有限，建议先领取。取完咖啡后，可以顺路去DTX精品超市完成下一站打卡，点亮5个还有额外惊喜。`;
+    const narration = `${getUserSalutation(userProfile)}，打卡成功！原价38元的西班牙拿铁已为您解锁，今天1元换购，数量有限，建议先领取。取完咖啡后，可以顺路去DTX精品超市完成下一站打卡，点亮5个即可获得专属红包。`;
 
     return {
       text: narration,

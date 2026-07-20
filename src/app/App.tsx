@@ -194,6 +194,7 @@ export default function App() {
                 restaurantCards: response.restaurantCards,
                 appointmentCard: response.appointmentCard,
                 checkInCard: response.checkInCard,
+                redPacketFlowCard: response.redPacketFlowCard,
                 streaming: false,
               }
             : m,

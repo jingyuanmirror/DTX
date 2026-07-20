@@ -43,7 +43,7 @@ function scoreSection(query: string, section: KnowledgeSection): number {
   const target = `${section.title}\n${section.content}`.toLowerCase();
 
   const serviceKeywords = [
-    "服务台", "客服台", "问询台", "咨询台", "轮椅", "退货", "退换", "邮寄", "寄送", "快递", "配送", "营业时间", "失物招领", "无障碍", "会员",
+    "服务台", "客服台", "问询台", "咨询台", "轮椅", "退货", "退换", "邮寄", "寄送", "快递", "配送", "营业时间", "失物招领", "无障碍", "会员", "红包",
   ];
 
   let score = 0;
@@ -69,7 +69,7 @@ async function isMallServiceQuery(text: string): Promise<boolean> {
       role: "system",
       content:
         "你是一个意图分类器。判断用户问题是否属于’商场服务与信息咨询’。\n"
-        + "商场服务与信息咨询包含但不限于：服务台、轮椅、退换货、寄送配送、营业时间、失物招领、无障碍、会员服务规则、楼层品牌、店铺位置等。\n"
+        + "商场服务与信息咨询包含但不限于：服务台、轮椅、退换货、寄送配送、营业时间、失物招领、无障碍、会员服务规则、楼层品牌、店铺位置、专属红包/打卡红包如何使用等。\n"
         + "重要：’餐厅推荐’、’今天吃什么’、’美食推荐’、’求推荐餐厅’等餐饮推荐类问题不属于此分类，应输出 NO。\n"
         + "如果是，输出 YES；如果不是，输出 NO。只允许输出 YES 或 NO。",
     },
@@ -178,7 +178,7 @@ async function rewriteWithLLM(userQuestion: string, snippet: string, salutation:
 
 export const serviceQASkill: Skill = {
   name: "service-qa",
-  intentDescription: "处理商场服务咨询（服务台、轮椅、退换货、邮寄、营业时间、失物招领、楼层品牌、店铺位置、会员服务规则等），基于知识库文档回答且不杜撰。注:餐厅推荐/今天吃什么/美食推荐等餐饮推荐场景走 restaurant-recommend。",
+  intentDescription: "处理商场服务咨询（服务台、轮椅、退换货、邮寄、营业时间、失物招领、楼层品牌、店铺位置、会员服务规则、专属红包/打卡红包如何使用等），基于知识库文档回答且不杜撰。注:餐厅推荐/今天吃什么/美食推荐等餐饮推荐场景走 restaurant-recommend。",
   match: () => true,
   handle: async ({ text, userProfile }) => {
     const mallServiceQuery = await isMallServiceQuery(text);

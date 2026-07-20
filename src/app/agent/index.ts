@@ -1,6 +1,6 @@
 import type { AgentResponse, SkillContext } from "./types";
 import { skills } from "../skills";
-import { setStoreConsultHistory } from "../skills/store-consult";
+import { setStoreConsultHistory, resetStoreConsultState } from "../skills/store-consult";
 import { chat } from "../llm/chat";
 import { chatCompletion } from "../llm/client";
 import type { ChatMessage } from "../llm/types";
@@ -11,6 +11,7 @@ let llmHistory: ChatMessage[] = [];
 /** Reset LLM conversation history (e.g. on app re-mount) */
 export function resetLLMHistory() {
   llmHistory = [];
+  resetStoreConsultState();
 }
 
 /**
@@ -190,7 +191,8 @@ async function classifySkillIntent(text: string): Promise<string | null> {
         + "### service-qa（商场服务与餐饮美食咨询）\n"
         + "- 餐饮推荐：\"今天吃什么\"、\"午餐推荐\"、\"晚餐吃什么\"、\"有什么好吃的\"、\"吃什么\"、\"有啥吃的\"\n"
         + "- 餐厅信息：\"新荣记\"、\"大董\"、\"鼎泰丰\"、\"海底捞\"、\"喜茶\"、\"美食广场\"等餐厅推荐与信息\n"
-        + "- 商场服务：\"服务台\"、\"轮椅\"、\"退换货\"、\"邮寄\"、\"营业时间\"、\"失物招领\"\n\n"
+        + "- 商场服务：\"服务台\"、\"轮椅\"、\"退换货\"、\"邮寄\"、\"营业时间\"、\"失物招领\"\n"
+        + "- 专属红包/打卡红包如何使用、怎么抵扣、怎么花：\"专属红包怎么用\"、\"打卡红包怎么抵扣\"\n\n"
         + "### queue / cross-sell / coupon\n"
         + "- 按各skill描述路由\n\n"
         + "重要：要结合上下文理解用户意图。例如：\n"

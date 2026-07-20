@@ -58,7 +58,7 @@ export function CheckInCardBubble({ card }: { card: CheckInCard }) {
           </div>
           <div className="mt-1.5 flex items-center gap-1">
             <Sparkles size={9} strokeWidth={2} color="#7C6FE0" />
-            <p className="text-[9px] text-[#A89D8A]">再打卡 4 个,即可点亮专属礼遇</p>
+            <p className="text-[9px] text-[#A89D8A]">再打卡 4 个,即可领取专属红包</p>
           </div>
         </div>
 

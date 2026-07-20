@@ -16,15 +16,24 @@ export function setStoreConsultHistory(history: ChatMessage[]): void {
   recentChatHistory = history;
 }
 
-// ── Brand card dedup ─────────────────────────────────────────────────
-// Track which brands have already had their card shown in this conversation.
-// Once a brand's card has appeared, we don't show it again for follow-up queries.
-const shownBrandCards = new Set<string>();
+// ── Brand card dedup (sliding-window LRU) ─────────────────────────────
+// Cards are not persisted into llmHistory (only reply text is), so we can't
+// infer "shown recently" from history. Keep a bounded LRU of recently-shown
+// brand names, sized to the history window (agent/index.ts injects slice(-8)).
+// A brand re-shown after falling out of the window will show its card again.
+const RECENT_BRAND_CARD_WINDOW = 8;
+const recentlyShownBrands: string[] = [];
 
 function shouldShowBrandCard(brandName: string): boolean {
-  if (shownBrandCards.has(brandName)) return false;
-  shownBrandCards.add(brandName);
+  if (recentlyShownBrands.includes(brandName)) return false; // still in window
+  recentlyShownBrands.push(brandName);
+  if (recentlyShownBrands.length > RECENT_BRAND_CARD_WINDOW) recentlyShownBrands.shift();
   return true;
+}
+
+/** Clear the brand-card dedup cache — called on app re-mount alongside resetLLMHistory. */
+export function resetStoreConsultState(): void {
+  recentlyShownBrands.length = 0;
 }
 
 // ── Brand catalog parser ──────────────────────────────────────────────
@@ -84,28 +93,34 @@ function extractField(text: string, label: string): string | null {
 
 const BRAND_CATALOG = parseBrandCatalog(brandCatalogDoc);
 
+// Only catalog brands matter for matching. brandKeywords also lists brands
+// absent from the catalog (e.g. Bottega Veneta, La Mer, SK-II) — those were
+// dead lookups (find returned undefined and got skipped). Precompute triggers
+// per catalog entry once: the shared alias list, falling back to the entry name.
+const CATALOG_KEYWORDS: Array<{ entry: BrandEntry; triggers: string[] }> = BRAND_CATALOG.map(
+  (entry) => ({
+    entry,
+    triggers: brandKeywords[entry.name] ?? [entry.name.toLowerCase()],
+  }),
+);
+
 // ── Brand matching ────────────────────────────────────────────────────
 
 /**
- * Match user text against brand catalog entries using the shared brandKeywords map.
+ * Match user text against catalog brand entries (alias-aware).
  * Returns matched BrandEntry or null.
  */
 function matchBrand(text: string): BrandEntry | null {
   const lower = text.toLowerCase();
 
-  // 1. Try exact keyword match from preference system
-  for (const [brandName, triggers] of Object.entries(brandKeywords)) {
-    if (triggers.some((t) => lower.includes(t))) {
-      const entry = BRAND_CATALOG.find((e) => e.name === brandName);
-      if (entry) return entry;
-    }
+  // 1. Alias match from the shared brandKeywords map (catalog brands only)
+  for (const { entry, triggers } of CATALOG_KEYWORDS) {
+    if (triggers.some((t) => lower.includes(t.toLowerCase()))) return entry;
   }
 
-  // 2. Try matching against catalog brand names directly
+  // 2. Fallback: catalog brand names mentioned verbatim
   for (const entry of BRAND_CATALOG) {
-    if (lower.includes(entry.name.toLowerCase())) {
-      return entry;
-    }
+    if (lower.includes(entry.name.toLowerCase())) return entry;
   }
 
   return null;
@@ -114,6 +129,25 @@ function matchBrand(text: string): BrandEntry | null {
 // ── Brand follow-up detection (short queries in brand context) ───────
 
 const BRAND_FOLLOWUP_KEYWORDS = ["新品", "新款", "到货", "到了什么", "有什么", "有吗", "几楼", "在哪", "位置", "品类", "卖什么"];
+
+// Map itemKeywords keys to the catalog category substrings they should match.
+// Item words (e.g. "包") rarely equal a category word ("皮具"), so a raw
+// includes() misses most brands. Keep this in sync with brand-catalog.md when
+// categories change.
+const ITEM_TO_CATEGORY: Record<string, string[]> = {
+  丝巾: ["丝巾配饰", "配饰"],
+  手袋: ["皮具"],
+  腕表: ["腕表"],
+  珠宝: ["高级珠宝", "珠宝"],
+  香水: ["香水", "香水美妆"],
+  彩妆: ["香水美妆", "美妆"],
+  护肤: ["香水美妆", "美妆"],
+  鞋履: ["鞋履"],
+  成衣: ["高级成衣", "成衣"],
+  家居: ["家居", "家具"],
+  生鲜: ["生鲜"],
+  鲜花: ["生鲜"],
+};
 
 /**
  * Check if the text is a short follow-up that should be interpreted
@@ -135,12 +169,12 @@ function detectBrandFromContext(text: string, recentHistory: ChatMessage[]): str
     const msg = recentHistory[i];
     if (msg.role !== "assistant") continue;
 
-    for (const [brandName, triggers] of Object.entries(brandKeywords)) {
-      if (triggers.some((t) => msg.content.toLowerCase().includes(t))) {
-        return brandName;
+    for (const { entry, triggers } of CATALOG_KEYWORDS) {
+      if (triggers.some((t) => msg.content.toLowerCase().includes(t.toLowerCase()))) {
+        return entry.name;
       }
     }
-    // Also check catalog brand names
+    // Also check catalog brand names verbatim
     for (const entry of BRAND_CATALOG) {
       if (msg.content.toLowerCase().includes(entry.name.toLowerCase())) {
         return entry.name;
@@ -187,8 +221,10 @@ function buildBrandSuggestion(question: string, entry: BrandEntry): string {
   const supportsBooking = entry.saBooking.includes("支持");
 
   if (asksForLocation) {
-    const featuredArrival = entry.highlight.split(/[、，]/)[0]?.trim();
-    const arrivalHint = featuredArrival ? `另外，${entry.name} 本季有 ${featuredArrival}` : "";
+    // Don't extract a single item name from highlight — the first `、`-split
+    // segment carries a full clause (e.g. "Classic Flap 新色到店（小羊皮黑色金扣）"),
+    // which reads as clutter. Summarize instead.
+    const arrivalHint = entry.highlight ? `另外，${entry.name} 本季有多款新品到店` : "";
     const bookingHint = supportsBooking ? "，需要的话我可以帮您预约到店。" : "。";
     return arrivalHint ? `\n\n${arrivalHint}${bookingHint}` : supportsBooking ? `\n\n需要的话，我也可以帮您预约 ${entry.name} 到店。` : "";
   }
@@ -198,6 +234,27 @@ function buildBrandSuggestion(question: string, entry: BrandEntry): string {
   }
 
   return "";
+}
+
+/**
+ * Detect which catalog brands appear in a recommendation text and build
+ * brand cards for them (deduped via the LRU). Uses alias-aware matching so
+ * "香奈儿"/"Chanel" both hit. Returns undefined when nothing matches, so the
+ * caller renders a pure-text recommendation instead of forcing a card.
+ */
+function extractBrandCardsFromText(text: string): BrandCard[] | undefined {
+  const cards: BrandCard[] = [];
+  for (const entry of BRAND_CATALOG) {
+    const triggers = brandKeywords[entry.name] ?? [entry.name];
+    const lower = text.toLowerCase();
+    const hit = triggers.some((t) => lower.includes(t.toLowerCase()))
+      || lower.includes(entry.name.toLowerCase());
+    if (hit && shouldShowBrandCard(entry.name)) {
+      cards.push(buildBrandCard(entry));
+      if (cards.length >= 3) break;
+    }
+  }
+  return cards.length > 0 ? cards : undefined;
 }
 
 // ── LLM-powered answer for brand queries ─────────────────────────────
@@ -284,6 +341,12 @@ async function isStoreConsultQuery(text: string, recentHistory?: ChatMessage[]):
   // Fast path: short follow-up with new-arrival keywords
   if (/^.{0,10}?(新品|新款|到货|有什么新|有新).{0,10}?$/.test(text)) return true;
 
+  // Fast path: strong signals that this belongs to another skill. Skip the
+  // LLM round-trip as long as no catalog brand is mentioned (the !matchBrand
+  // guard keeps mixed sentences like "Chanel 排队费" flowing to the brand path).
+  const NEGATIVE_KEYWORDS = ["停车费", "取号", "排号", "领券", "入会", "办会员", "退换货", "营业时间", "失物招领", "优惠券", "会员卡"];
+  if (!directMatch && NEGATIVE_KEYWORDS.some((kw) => text.includes(kw))) return false;
+
   // Fallback: LLM classification
   const messages: ChatMessage[] = [
     {
@@ -343,20 +406,16 @@ export const storeConsultSkill: Skill = {
     if (isGiftOrRecommendQuery(text) && !matchBrand(text)) {
       const recommendation = await recommendWithLLM(text, userProfile);
 
-      // Build brand cards for mentioned brands in user preferences
-      const preferenceBrands = userProfile.brands
-        .map((b) => BRAND_CATALOG.find((e) => e.name === b))
-        .filter(Boolean) as BrandEntry[];
-
-      const brandCards = preferenceBrands.length > 0
-        ? preferenceBrands.filter((e) => shouldShowBrandCard(e.name)).slice(0, 3).map((e) => buildBrandCard(e))
-        : undefined;
-      const hasAnyCards = brandCards && brandCards.length > 0;
+      // Cards must reflect what was actually recommended, not stale user prefs.
+      // Scan the recommendation text for catalog brands (alias-aware) and emit
+      // cards for those; when nothing matches (e.g. all items are off-catalog),
+      // fall back to a pure-text recommendation rather than forcing a card.
+      const brandCards = extractBrandCardsFromText(recommendation);
 
       return {
         text: recommendation,
         quickReplies: ["帮我预约档期", "帮我预留车位", "联系专属SA"],
-        brandCards: hasAnyCards ? brandCards : undefined,
+        brandCards,
       };
     }
 
@@ -393,10 +452,14 @@ export const storeConsultSkill: Skill = {
       .map(([item]) => item);
 
     if (matchedItems.length > 0) {
-      // Find brands that carry this item category
+      // Find brands that carry this item category. Use the ITEM_TO_CATEGORY
+      // allowlist (so "包"/手袋 hits "皮具") plus a direct substring fallback.
       const relevantBrands = BRAND_CATALOG.filter((e) =>
         e.categories.some((c) =>
-          matchedItems.some((item) => c.includes(item) || item.includes(c)),
+          matchedItems.some((item) => {
+            const allowList = ITEM_TO_CATEGORY[item] ?? [];
+            return c.includes(item) || allowList.some((allow) => c.includes(allow));
+          }),
         ),
       ).slice(0, 3);
 
