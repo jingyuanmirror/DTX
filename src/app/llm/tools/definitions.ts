@@ -46,7 +46,7 @@ export const toolDefinitions: ToolDefinition[] = [
     function: {
       name: "queue",
       description:
-        "处理排队相关事务。当用户请求排队取号（如'帮我排新荣记3人位'、'帮我排Chanel'）或查询排队进度时调用。如果用户指定了店铺则排队取号，否则查询已有排队状态。",
+        "处理排队相关事务。当用户请求排队、等位或取号（如'帮我排新荣记3人位'、'帮我新荣记等位'、'帮我排Chanel'）或查询排队进度时调用。如果用户指定了店铺则排队取号，否则查询已有排队状态。",
       parameters: {
         type: "object",
         properties: {
@@ -176,7 +176,7 @@ export const toolDefinitions: ToolDefinition[] = [
     function: {
       name: "restaurant-recommend",
       description:
-        "餐饮/餐厅推荐专属。当用户问美食推荐、想吃什么、今天吃什么、求推荐餐厅（如'有什么美食推荐'、'今天吃什么'、'推荐个餐厅'、'有什么好吃的'）时调用。若用户已说出想吃的菜系/口味（中餐、粤菜、火锅、西餐、日料、小吃快餐、茶饮咖啡），填入 cuisine 参数；用户说'随便''都行'也调用（cuisine 填'随便'）；用户未表达口味时 cuisine 留空，skill 会先引导用户说出类型。\n重要：纯查询餐厅楼层位置、服务台、退换货、营业时间等非「推荐」场景，走 service-qa，不要用此工具。",
+        "餐饮/餐厅推荐专属。当用户问美食推荐、想吃什么、今天吃什么、求推荐餐厅，或比较亲子/儿童友好餐厅时调用（如'哪个餐厅适合亲子'）。亲子场景会分析亲子适配度、优惠与等位时长。若用户已说出想吃的菜系/口味（中餐、粤菜、火锅、西餐、日料、小吃快餐、茶饮咖啡），填入 cuisine 参数；用户说'随便''都行'也调用（cuisine 填'随便'）；用户未表达口味时 cuisine 留空。\n重要：纯查询餐厅楼层位置、服务台、退换货、营业时间等非「推荐」场景，走 service-qa，不要用此工具。",
       parameters: {
         type: "object",
         properties: {

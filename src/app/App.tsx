@@ -194,7 +194,9 @@ export default function App() {
                 restaurantCards: response.restaurantCards,
                 appointmentCard: response.appointmentCard,
                 checkInCard: response.checkInCard,
+                checkInSpotsCard: response.checkInSpotsCard,
                 redPacketFlowCard: response.redPacketFlowCard,
+                productRecommendCards: response.productRecommendCards,
                 streaming: false,
               }
             : m,
@@ -210,13 +212,15 @@ export default function App() {
       });
     } catch (error) {
       console.error("Send failed:", error);
+      // On error, finalize the placeholder with a fallback message (include error detail for diagnosis)
+      const errDetail = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
       // On error, finalize the placeholder with a fallback message
       setMessages((p) =>
         p.map((m) =>
           m.id === agentMsgId
             ? {
                 ...m,
-                text: m.text || "抱歉，服务暂时不可用，请稍后再试。",
+                text: m.text || `抱歉，服务暂时不可用，请稍后再试。\n[诊断] ${errDetail}`,
                 quickReplies: ["查询停车状态", "今日专属优惠"],
                 streaming: false,
               }

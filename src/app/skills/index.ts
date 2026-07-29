@@ -12,6 +12,7 @@ import { checkInSkill } from "./check-in";
 import { redPacketUsageSkill } from "./red-packet-usage";
 import { activityIntroSkill } from "./activity-intro";
 import { productIntroSkill } from "./product-intro";
+import { productRecommendSkill } from "./product-recommend";
 import { weatherSkill } from "./weather";
 import { restaurantRecommendSkill } from "./restaurant-recommend";
 
@@ -27,6 +28,7 @@ export const skills: Skill[] = [
   activityRecommendSkill,
   activityIntroSkill,
   productIntroSkill,
+  productRecommendSkill,
   checkInSkill,
   redPacketUsageSkill,
   weatherSkill,

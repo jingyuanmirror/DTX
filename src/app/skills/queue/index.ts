@@ -4,7 +4,7 @@ import type { QueueInfo } from "../../types";
 
 const DEMO_QUEUE_INFO: QueueInfo = {
   brand: "新荣记",
-  floor: "5F",
+  floor: "7F-D01",
   partySize: 3,
   queueNo: "D28",
   ahead: 4,

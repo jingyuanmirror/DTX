@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { MapPin, Sparkles, UtensilsCrossed } from "lucide-react";
+import { Clock3, MapPin, Sparkles, Tag, UtensilsCrossed } from "lucide-react";
 import type { RestaurantCard } from "../../types";
 
 /**
@@ -66,6 +66,38 @@ export function RestaurantCardBubble({ card }: { card: RestaurantCard }) {
             <Sparkles size={11} strokeWidth={2} color="#7C6FE0" className="mt-[2px] shrink-0" />
             <p className="text-[11px] leading-[1.5] text-[#20201C]">{card.highlight}</p>
           </div>
+
+          {card.familyFit && (
+            <div className="mb-3 grid gap-2 rounded-[6px] border border-[#EEE8DD] bg-[#FAF8F3] p-2.5">
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 text-[9px] text-[#5B4DD0]" style={{ fontWeight: 600 }}>
+                  亲子 {card.familyFit.score}/5
+                </span>
+                <p className="text-[9px] leading-[1.45] text-[#5B554C]">{card.familyFit.reason}</p>
+              </div>
+              {card.offer && (
+                <div className="flex items-center gap-1.5 text-[9px] text-[#3F6A50]">
+                  <Tag size={10} strokeWidth={1.7} />
+                  <span>优惠：{card.offer}</span>
+                </div>
+              )}
+              {card.waitTime && (
+                <div className="flex items-center gap-1.5 text-[9px] text-[#766C5E]">
+                  <Clock3 size={10} strokeWidth={1.7} />
+                  <span>等位：{card.waitTime.label}</span>
+                  <span
+                    className="ml-auto shrink-0 rounded-full px-1.5 py-0.5"
+                    style={{
+                      color: card.waitTime.level === "long" ? "#A94A3F" : card.waitTime.level === "medium" ? "#9A6B24" : "#3F6A50",
+                      background: card.waitTime.level === "long" ? "#F9ECE9" : card.waitTime.level === "medium" ? "#F8F0DE" : "#EAF3EC",
+                    }}
+                  >
+                    {card.waitTime.level === "long" ? "较长" : card.waitTime.level === "medium" ? "适中" : "较短"}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 招牌菜 tag */}
           {dishes.length > 0 && (

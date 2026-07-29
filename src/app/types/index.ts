@@ -131,6 +131,15 @@ export interface RestaurantCard {
   tags?: string[];
   tip?: string;
   image?: string;
+  familyFit?: {
+    score: number;
+    reason: string;
+  };
+  offer?: string;
+  waitTime?: {
+    label: string;
+    level: "short" | "medium" | "long";
+  };
 }
 
 export interface AppointmentInfo {
@@ -161,6 +170,8 @@ export interface CheckInSpotItem {
   floor: string;
   category: string;
   desc: string;
+  benefit?: string;
+  tags?: string[];
 }
 
 export interface CheckInCard {
@@ -176,6 +187,14 @@ export interface CheckInCard {
   };
   recommendations: CheckInSpotItem[];
   couponHint: string;
+}
+
+/** 打卡点列表卡片 —— 用户查询"打卡点都有哪些"时展示所有打卡点 */
+export interface CheckInSpotsCard {
+  type: "check-in-spots-card";
+  title: string;
+  spots: CheckInSpotItem[];
+  hint?: string;
 }
 
 /** 专属红包"碰一下"使用流程卡 */
@@ -208,7 +227,9 @@ export interface Message {
   reservationCard?: ReservationCard;
   appointmentCard?: AppointmentCard;
   checkInCard?: CheckInCard;
+  checkInSpotsCard?: CheckInSpotsCard;
   redPacketFlowCard?: RedPacketFlowCard;
+  productRecommendCards?: ProductIntroCard[];
   streaming?: boolean;
 }
 
@@ -261,6 +282,7 @@ export interface UserProfile {
   categories: string[];
   brands: string[];
   items: string[];
+  preferenceNotes?: string[];
   isMember?: boolean;
   memberTier?: "silver" | "diamond" | "black";
   _justOnboarded?: boolean;

@@ -1,4 +1,4 @@
-import type { ActivityIntroCard, AppointmentCard, AppointmentInfo, BrandCard, CheckInCard, CouponCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingInfo, ParkingReservation, ParkingShoppingGuideCard, ProductIntroCard, QueueCard, QueueInfo, RedPacketFlowCard, ReservationCard, RestaurantCard, UserProfile } from "../types";
+import type { ActivityIntroCard, AppointmentCard, AppointmentInfo, BrandCard, CheckInCard, CheckInSpotsCard, CouponCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingInfo, ParkingReservation, ParkingShoppingGuideCard, ProductIntroCard, QueueCard, QueueInfo, RedPacketFlowCard, ReservationCard, RestaurantCard, UserProfile } from "../types";
 
 export interface SkillContext {
   text: string;
@@ -37,7 +37,9 @@ export interface AgentFollowUpMessage {
   restaurantCards?: RestaurantCard[];
   appointmentCard?: AppointmentCard;
   checkInCard?: CheckInCard;
+  checkInSpotsCard?: CheckInSpotsCard;
   redPacketFlowCard?: RedPacketFlowCard;
+  productRecommendCards?: ProductIntroCard[];
 }
 
 export interface AgentResponse {
@@ -57,7 +59,9 @@ export interface AgentResponse {
   restaurantCards?: RestaurantCard[];
   appointmentCard?: AppointmentCard;
   checkInCard?: CheckInCard;
+  checkInSpotsCard?: CheckInSpotsCard;
   redPacketFlowCard?: RedPacketFlowCard;
+  productRecommendCards?: ProductIntroCard[];
   followUpMessages?: AgentFollowUpMessage[];
   sideEffects?: AgentSideEffects;
 }

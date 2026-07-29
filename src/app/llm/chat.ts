@@ -72,6 +72,10 @@ export async function chat(
   let collectedBrandCards: AgentResponse["brandCards"] = undefined;
   let collectedRestaurantCards: AgentResponse["restaurantCards"] = undefined;
   let collectedAppointmentCard: AgentResponse["appointmentCard"] = undefined;
+  let collectedCheckInCard: AgentResponse["checkInCard"] = undefined;
+  let collectedCheckInSpotsCard: AgentResponse["checkInSpotsCard"] = undefined;
+  let collectedRedPacketFlowCard: AgentResponse["redPacketFlowCard"] = undefined;
+  let collectedProductRecommendCards: AgentResponse["productRecommendCards"] = undefined;
 
   const newMessages: ChatMessage[] = [{ role: "user", content: userText }];
 
@@ -113,6 +117,10 @@ export async function chat(
         brandCards: collectedBrandCards,
         restaurantCards: collectedRestaurantCards,
         appointmentCard: collectedAppointmentCard,
+        checkInCard: collectedCheckInCard,
+        checkInSpotsCard: collectedCheckInSpotsCard,
+        redPacketFlowCard: collectedRedPacketFlowCard,
+        productRecommendCards: collectedProductRecommendCards,
       };
 
       // Merge side effects
@@ -180,13 +188,19 @@ export async function chat(
       if (toolResult.brandCards) collectedBrandCards = toolResult.brandCards;
       if (toolResult.restaurantCards) collectedRestaurantCards = toolResult.restaurantCards;
       if (toolResult.appointmentCard) collectedAppointmentCard = toolResult.appointmentCard;
+      if (toolResult.checkInCard) collectedCheckInCard = toolResult.checkInCard;
+      if (toolResult.checkInSpotsCard) collectedCheckInSpotsCard = toolResult.checkInSpotsCard;
+      if (toolResult.redPacketFlowCard) collectedRedPacketFlowCard = toolResult.redPacketFlowCard;
+      if (toolResult.productRecommendCards) collectedProductRecommendCards = toolResult.productRecommendCards;
 
       // If a card was returned, short-circuit: use the tool's reply directly
       const hasCard = toolResult.card || toolResult.membershipAuthorizationCard || toolResult.newMemberOfferCard
         || toolResult.parkingCard || toolResult.parkingShoppingGuideCard || toolResult.activityIntroCard
         || toolResult.productIntroCard || toolResult.queueCard
         || toolResult.reservationCard || toolResult.coupons || toolResult.brandCards
-        || toolResult.restaurantCards || toolResult.appointmentCard;
+        || toolResult.restaurantCards || toolResult.appointmentCard
+        || toolResult.checkInCard || toolResult.checkInSpotsCard || toolResult.redPacketFlowCard
+        || toolResult.productRecommendCards;
       if (hasCard) {
         shouldShortCircuit = true;
         const data = toolResult.data as { reply?: string; quickReplies?: string[] };
@@ -222,6 +236,10 @@ export async function chat(
         brandCards: collectedBrandCards,
         restaurantCards: collectedRestaurantCards,
         appointmentCard: collectedAppointmentCard,
+        checkInCard: collectedCheckInCard,
+        checkInSpotsCard: collectedCheckInSpotsCard,
+        redPacketFlowCard: collectedRedPacketFlowCard,
+        productRecommendCards: collectedProductRecommendCards,
       };
       if (Object.keys(collectedSideEffects).length > 0) {
         response.sideEffects = collectedSideEffects as AgentSideEffects;
@@ -253,6 +271,10 @@ export async function chat(
       brandCards: collectedBrandCards,
       restaurantCards: collectedRestaurantCards,
       appointmentCard: collectedAppointmentCard,
+      checkInCard: collectedCheckInCard,
+      checkInSpotsCard: collectedCheckInSpotsCard,
+      redPacketFlowCard: collectedRedPacketFlowCard,
+        productRecommendCards: collectedProductRecommendCards,
     },
     newMessages,
   };

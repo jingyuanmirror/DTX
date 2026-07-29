@@ -9,6 +9,7 @@ import { BrandCardCarousel } from "../cards/BrandCardCarousel";
 import { RestaurantCardCarousel } from "../cards/RestaurantCardCarousel";
 import { AppointmentCardBubble } from "../cards/AppointmentCardBubble";
 import { CheckInCardBubble } from "../cards/CheckInCardBubble";
+import { CheckInSpotsCardBubble } from "../cards/CheckInSpotsCardBubble";
 import { RedPacketFlowCardBubble } from "../cards/RedPacketFlowCardBubble";
 import { MembershipAuthorizationCardBubble } from "../cards/MembershipAuthorizationCardBubble";
 import { NewMemberOfferCardBubble } from "../cards/NewMemberOfferCardBubble";
@@ -21,8 +22,8 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
   const isAgent = msg.role === "agent";
   const hasRichCard = Boolean(
     msg.card || msg.parkingCard || msg.reservationCard || msg.queueCard || msg.coupons?.length
-      || msg.brandCards?.length || msg.restaurantCards?.length || msg.appointmentCard || msg.checkInCard || msg.redPacketFlowCard || msg.membershipAuthorizationCard
-      || msg.newMemberOfferCard || msg.parkingShoppingGuideCard || msg.activityIntroCard || msg.productIntroCard,
+      || msg.brandCards?.length || msg.restaurantCards?.length || msg.appointmentCard || msg.checkInCard || msg.checkInSpotsCard || msg.redPacketFlowCard || msg.membershipAuthorizationCard
+      || msg.newMemberOfferCard || msg.parkingShoppingGuideCard || msg.activityIntroCard || msg.productIntroCard || msg.productRecommendCards?.length,
   );
 
   return (
@@ -82,6 +83,9 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
           {isAgent && msg.productIntroCard && (
             <ProductIntroCardBubble card={msg.productIntroCard} />
           )}
+          {isAgent && msg.productRecommendCards && msg.productRecommendCards.map((card, i) => (
+            <ProductIntroCardBubble key={`${card.brand}-${card.name}-${i}`} card={card} />
+          ))}
           {isAgent && msg.reservationCard && <ReservationCardBubble card={msg.reservationCard} />}
           {isAgent && msg.queueCard && <QueueCardBubble card={msg.queueCard} />}
           {isAgent && msg.brandCards && <BrandCardCarousel cards={msg.brandCards} />}
@@ -89,6 +93,7 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
           {isAgent && msg.restaurantCards && <RestaurantCardCarousel cards={msg.restaurantCards} />}
           {isAgent && msg.appointmentCard && <AppointmentCardBubble card={msg.appointmentCard} />}
           {isAgent && msg.checkInCard && <CheckInCardBubble card={msg.checkInCard} />}
+          {isAgent && msg.checkInSpotsCard && <CheckInSpotsCardBubble card={msg.checkInSpotsCard} />}
           {isAgent && msg.redPacketFlowCard && <RedPacketFlowCardBubble card={msg.redPacketFlowCard} />}
 
           <p className="text-[9px] text-[#A89D8A] mt-1 tracking-wider">{msg.time}</p>

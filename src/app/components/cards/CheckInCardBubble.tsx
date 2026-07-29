@@ -7,6 +7,7 @@ const SPOT_IMAGES: Record<string, string> = {
   "DTX精品超市": "/checkin-market.jpg",
   "海底捞": "/checkin-hotpot.jpg",
   "乐高体验店": "/checkin-lego.jpg",
+  "屈臣氏": "/product-mask.jpg",
 };
 
 /**

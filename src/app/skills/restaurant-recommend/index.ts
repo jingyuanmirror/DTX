@@ -25,6 +25,38 @@ const CUISINE_KEYWORDS: { cuisine: string; keys: string[] }[] = [
   { cuisine: "随便", keys: ["随便", "都行", "都可以", "你定", "看着办", "你推荐", "不知道吃什么", "没啥想法"] },
 ];
 
+const FAMILY_INTENT_PATTERN = /亲子|带(?:小孩|孩子|宝宝|娃)|儿童友好|一家人|家庭聚餐/;
+
+const FAMILY_RECOMMENDATIONS: Record<string, {
+  score: number;
+  reason: string;
+  offer: string;
+  waitLabel: string;
+  waitLevel: "short" | "medium" | "long";
+}> = {
+  海底捞: {
+    score: 5,
+    reason: "有儿童游乐区，服务人员对带娃家庭更友好，番茄锅等口味也容易照顾孩子",
+    offer: "50元餐饮券可用",
+    waitLabel: "晚市约40-60分钟",
+    waitLevel: "long",
+  },
+  翠园: {
+    score: 4.5,
+    reason: "提供儿童座椅，环境相对安静，广式点心选择多，适合全家分享",
+    offer: "8.8折粤菜家庭餐券",
+    waitLabel: "周末茶市约20-40分钟",
+    waitLevel: "medium",
+  },
+  鼎泰丰: {
+    score: 4,
+    reason: "小笼包和蒸点接受度高，出餐稳定，非高峰时段带孩子用餐更轻松",
+    offer: "满150减15小笼包礼券",
+    waitLabel: "非高峰约10-20分钟，高峰约30-45分钟",
+    waitLevel: "medium",
+  },
+};
+
 function detectCuisine(text: string, toolCuisine?: string): string | null {
   if (toolCuisine && toolCuisine.trim()) {
     const hit = CUISINE_CATEGORIES.find((c) => toolCuisine.includes(c));
@@ -87,6 +119,20 @@ function buildRestaurantCards(restaurants: Restaurant[]): RestaurantCard[] {
   }));
 }
 
+function buildFamilyRestaurantCards(restaurants: Restaurant[]): RestaurantCard[] {
+  return buildRestaurantCards(restaurants).map((card) => {
+    const analysis = FAMILY_RECOMMENDATIONS[card.name];
+    return analysis
+      ? {
+          ...card,
+          familyFit: { score: analysis.score, reason: analysis.reason },
+          offer: analysis.offer,
+          waitTime: { label: analysis.waitLabel, level: analysis.waitLevel },
+        }
+      : card;
+  });
+}
+
 async function rewriteRecommendation(
   userText: string,
   cuisine: string,
@@ -131,8 +177,24 @@ export const restaurantRecommendSkill: Skill = {
     "餐饮/餐厅推荐专属。当用户问美食推荐、想吃什么、今天吃什么、求推荐餐厅时调用。若用户未说想吃的类型,先引导用户说出菜系/口味;用户说'随便'则按今日精选推荐。注:纯查餐厅位置/服务台/退换货等非推荐场景仍走 service-qa。",
   match: () => true,
   handle: async ({ text, toolArgs, userProfile }) => {
-    const cuisine = detectCuisine(text, String(toolArgs?.cuisine ?? ""));
     const salutation = getUserSalutation(userProfile);
+
+    // ── 亲子餐厅对比：按适配度、优惠和等位时长给出决策分析 ───────
+    if (FAMILY_INTENT_PATTERN.test(text)) {
+      const picks = ["海底捞", "翠园", "鼎泰丰"]
+        .map((name) => RESTAURANTS.find((restaurant) => restaurant.name === name))
+        .filter((restaurant): restaurant is Restaurant => Boolean(restaurant));
+
+      return {
+        text:
+          `${salutation}，综合亲子设施、优惠和等位时间，我更推荐「翠园」：有儿童座椅、环境相对安静，当前有8.8折家庭餐券，周末茶市预计等位20-40分钟，整体最均衡。\n\n`
+          + "如果孩子更看重玩乐，海底捞的儿童游乐区适配度最高，刚好还有一张50元餐饮券可以使用，不过晚市通常要等40-60分钟；如果想尽快入座，鼎泰丰建议避开饭点，非高峰约等10-20分钟。下面可以逐张对比三家。",
+        quickReplies: ["帮我排翠园", "查看翠园优惠", "换一家亲子餐厅"],
+        restaurantCards: buildFamilyRestaurantCards(picks),
+      };
+    }
+
+    const cuisine = detectCuisine(text, String(toolArgs?.cuisine ?? ""));
 
     // ── 未表达口味(且未说随便)→ 纯问句引导 ─────────────────────
     if (!cuisine) {

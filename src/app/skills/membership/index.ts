@@ -1,7 +1,7 @@
 import type { Skill } from "../../agent/types";
 import { getUserSalutation } from "../../utils/salutation";
 import type { EnrollmentForm, UserProfile } from "../../types";
-import { buildPreferenceSummary, detectPreference } from "../../utils/preference";
+import { detectPreference, isPreferenceExpression } from "../../utils/preference";
 import { chatCompletion } from "../../llm/client";
 import type { ChatMessage } from "../../llm/types";
 
@@ -9,6 +9,17 @@ const MEMBERSHIP_INQUIRY = /有会员吗|会员吗|会员服务|会员制度|会
 const MEMBERSHIP_ENROLL_INTENT = /我想(?:要)?(?:办理|申请|加入|开通|注册)?(?:入会|会员)|我要(?:办理|申请|加入|开通|注册)?(?:入会|会员)|帮我(?:办|办理|申请|加入|开通|注册)?(?:入会|会员)|给我(?:办|办理|申请|加入|开通|注册)?(?:入会|会员)|(?:办|办理|申请|加入|开通|注册)(?:一下)?(?:入会|会员)|(?:想|要|现在|马上|直接)(?:入会|加入会员)|成为(?:DTX)?会员|入会吧/;
 const MEMBERSHIP_AUTH_CONFIRM = /同意授权并加入会员|同意授权|确认授权/;
 const MEMBERSHIP_AUTH_CANCEL = /取消授权|不同意|暂不入会/;
+
+function formatCurrentPreferences(preference: ReturnType<typeof detectPreference>): string {
+  const values = [
+    ...preference.matchedCategories,
+    ...preference.matchedBrands,
+    ...preference.matchedItems,
+  ];
+  const uniqueValues = [...new Set(values)];
+  if (uniqueValues.length <= 1) return uniqueValues[0] ?? "本次提到的喜好";
+  return `${uniqueValues.slice(0, -1).join("、")}和${uniqueValues[uniqueValues.length - 1]}`;
+}
 
 const AUTHORIZATION_CARD = {
   type: "membership-authorization-card" as const,
@@ -155,8 +166,8 @@ export const membershipSkill: Skill = {
 
       if (MEMBERSHIP_AUTH_CONFIRM.test(text)) {
         return {
-          text: "李先生，欢迎加入DTX。您的50元新人礼和2小时停车权益已经生效。正好可以去B1精品超市逛逛，购买鲜花、水果等商品可直接使用新人券。",
-          quickReplies: ["使用新人券", "会员权益"],
+          text: "李先生，欢迎加入DTX。您的50元新人礼和2小时停车权益已经生效。正好可以去B1精品超市逛逛，购买鲜花、水果等商品可直接使用新人券。\n\n为了下次能为您提供更合心意的推荐，您平时喜欢哪些品类、品牌或商品？告诉我后，我会记入您的会员偏好。",
+          quickReplies: ["我喜欢美妆护肤", "我喜欢生鲜美食", "我关注亲子活动"],
           card: {
             type: "member-card",
             tier: "银卡会员",
@@ -196,18 +207,16 @@ export const membershipSkill: Skill = {
 
     // ── 1. 偏好收集（入会后）──
     if (preference.hasPreference && userProfile._justOnboarded) {
-      const newCategories =
-        preference.matchedCategory && !userProfile.categories.includes(preference.matchedCategory)
-          ? [...userProfile.categories, preference.matchedCategory]
-          : userProfile.categories;
+      const newCategories = [...new Set([...userProfile.categories, ...preference.matchedCategories])];
       const newBrands = [...new Set([...userProfile.brands, ...preference.matchedBrands])];
       const newItems = [...new Set([...userProfile.items, ...preference.matchedItems])];
 
       return {
-        text: `好的，已记下您的偏好，包括${buildPreferenceSummary({ categories: newCategories, brands: newBrands, items: newItems })}。后续有相关新品或活动，我会第一时间为您留意。\n\n如有其他需要，请随时告诉我。`,
+        text: `好的，已经记下您喜欢${formatCurrentPreferences(preference)}。下次我会根据这些喜好，为您提供更合适的品牌、活动和商品推荐。`,
         quickReplies: ["今日专属优惠", "查询停车状态", "联系专属SA"],
         sideEffects: {
           setUserProfile: () => ({
+            ...userProfile,
             categories: newCategories,
             brands: newBrands,
             items: newItems,
@@ -219,12 +228,30 @@ export const membershipSkill: Skill = {
       };
     }
 
+    // 刚入会后的自由偏好描述未命中预设词库时，也保留原话作为偏好备注。
+    if (userProfile._justOnboarded && isPreferenceExpression(text)) {
+      const note = text
+        .replace(/^(?:我的喜好|我的偏好)(?:是|：|:)?/, "")
+        .replace(/^(?:我)?(?:比较|更)?(?:喜欢|偏好|关注|对)/, "")
+        .trim() || text.trim();
+      const preferenceNotes = [...new Set([...(userProfile.preferenceNotes ?? []), note])];
+
+      return {
+        text: `好的，已经记下您“${note}”的偏好。下次我会结合这项喜好，为您提供更合适的推荐和服务。`,
+        quickReplies: ["今日专属优惠", "推荐适合我的活动", "查询停车状态"],
+        sideEffects: {
+          setUserProfile: () => ({
+            ...userProfile,
+            preferenceNotes,
+            _justOnboarded: false,
+          }),
+        },
+      };
+    }
+
     // ── 2. 偏好收集（已有会员）──
     if (preference.hasPreference && userProfile.isMember && !userProfile._justOnboarded) {
-      const newCategories =
-        preference.matchedCategory && !userProfile.categories.includes(preference.matchedCategory)
-          ? [...userProfile.categories, preference.matchedCategory]
-          : userProfile.categories;
+      const newCategories = [...new Set([...userProfile.categories, ...preference.matchedCategories])];
       const newBrands = [...new Set([...userProfile.brands, ...preference.matchedBrands])];
       const newItems = [...new Set([...userProfile.items, ...preference.matchedItems])];
 
@@ -234,10 +261,11 @@ export const membershipSkill: Skill = {
 
       if (hasNew) {
         return {
-          text: `好的，已为您记录偏好——${buildPreferenceSummary({ categories: newCategories, brands: newBrands, items: newItems })}。后续有相关新品或活动，我会第一时间通知您。\n\n如有其他需要，请随时告诉我。`,
+          text: `好的，已经记下您喜欢${formatCurrentPreferences(preference)}。后续有相关新品或活动，我会第一时间通知您。`,
           quickReplies: ["今日专属优惠", "查询停车状态", "联系专属SA"],
           sideEffects: {
             setUserProfile: () => ({
+              ...userProfile,
               categories: newCategories,
               brands: newBrands,
               items: newItems,
@@ -250,7 +278,7 @@ export const membershipSkill: Skill = {
       }
 
       return {
-        text: `好的，已记下您的偏好。后续有${buildPreferenceSummary(userProfile)}相关的最新信息，我会第一时间通知您。\n\n如有其他需要，请随时告诉我。`,
+        text: `好的，您喜欢${formatCurrentPreferences(preference)}，我已经记下了。后续有相关新品或活动，我会第一时间通知您。`,
         quickReplies: ["今日专属优惠", "查询停车状态", "联系专属SA"],
       };
     }
@@ -264,8 +292,8 @@ export const membershipSkill: Skill = {
         const displayName = updatedForm.name ?? userProfile.name ?? "会员";
         const salutation = getUserSalutation({ name: displayName, gender: updatedForm.gender ?? userProfile.gender });
         return {
-          text: `感谢您提供完整信息，${salutation}。入会手续已办理完成，您现在是DTX银卡会员。\n\n您可以点击会员中心查看会员信息，也可以随时向我咨询。\n\n另外，为了更好地服务您，您可以把偏好告诉我，比如您喜欢的品类或近期关注的品牌，有相关信息我会第一时间通知您。`,
-          quickReplies: ["美妆护肤", "生鲜美食", "亲子娱乐", "今日优惠"],
+          text: `感谢您提供完整信息，${salutation}。入会手续已办理完成，您现在是DTX银卡会员。\n\n您可以点击会员中心查看会员信息，也可以随时向我咨询。\n\n为了下次能为您提供更合心意的推荐，您平时喜欢哪些品类、品牌或商品？告诉我后，我会记入您的会员偏好。`,
+          quickReplies: ["我喜欢美妆护肤", "我喜欢生鲜美食", "我关注亲子活动"],
           card: {
             type: "member-card",
             tier: "银卡会员",

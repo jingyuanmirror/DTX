@@ -56,19 +56,22 @@ export const itemKeywords: Record<string, string[]> = {
   家居: ["家居", "家居用品", "摆件", "烛台"],
   生鲜: ["生鲜", "水果", "蔬菜", "海鲜", "肉类", "牛奶", "面包", "和牛", "大闸蟹"],
   鲜花: ["鲜花", "花束", "玫瑰", "百合", "郁金香"],
+  甜品: ["甜品", "甜点", "蛋糕", "冰淇淋", "马卡龙", "dessert"],
 };
 
 export interface PreferenceDetection {
   matchedCategory?: string;
+  matchedCategories: string[];
   matchedBrands: string[];
   matchedItems: string[];
   hasPreference: boolean;
 }
 
 export function detectPreference(text: string): PreferenceDetection {
-  const matchedCategory = Object.entries(categoryMap).find(([, keywords]) =>
-    keywords.some((kw) => text.includes(kw)),
-  )?.[0];
+  const matchedCategories = Object.entries(categoryMap)
+    .filter(([, keywords]) => keywords.some((kw) => text.includes(kw)))
+    .map(([category]) => category);
+  const matchedCategory = matchedCategories[0];
 
   const matchedBrands = Object.entries(brandKeywords)
     .filter(([, keywords]) => keywords.some((kw) => text.toLowerCase().includes(kw)))
@@ -80,10 +83,15 @@ export function detectPreference(text: string): PreferenceDetection {
 
   return {
     matchedCategory,
+    matchedCategories,
     matchedBrands,
     matchedItems,
-    hasPreference: Boolean(matchedCategory) || matchedBrands.length > 0 || matchedItems.length > 0,
+    hasPreference: matchedCategories.length > 0 || matchedBrands.length > 0 || matchedItems.length > 0,
   };
+}
+
+export function isPreferenceExpression(text: string): boolean {
+  return /(?:我)?(?:喜欢|偏好|关注|感兴趣|常买|爱逛|更喜欢|比较喜欢)|我的喜好|我的偏好/.test(text);
 }
 
 export function buildPreferenceSummary(profile: UserProfile): string {
@@ -111,6 +119,10 @@ export function buildPreferenceSummary(profile: UserProfile): string {
         ? profile.items.slice(0, -1).join("、") + "和" + profile.items[profile.items.length - 1]
         : profile.items[0];
     parts.push(itemList);
+  }
+
+  if (profile.preferenceNotes?.length) {
+    parts.push(profile.preferenceNotes.join("、"));
   }
 
   return parts.join("、");

@@ -1,6 +1,9 @@
 import type { AgentResponse, SkillContext } from "./types";
 import { skills } from "../skills";
 import { setStoreConsultHistory, resetStoreConsultState } from "../skills/store-consult";
+import { isProductRecommendIntent } from "../skills/product-recommend";
+import { isCheckInSpotsQuery } from "../skills/check-in";
+import { detectPreference, isPreferenceExpression } from "../utils/preference";
 import { chat } from "../llm/chat";
 import { chatCompletion } from "../llm/client";
 import type { ChatMessage } from "../llm/types";
@@ -89,6 +92,17 @@ async function routeBySkills(ctx: SkillContext): Promise<AgentResponse | null> {
     }
   }
 
+  // 入会后的下一条偏好表达优先回到 membership，完成画像记录闭环。
+  if (
+    ctx.userProfile._justOnboarded
+    && (detectPreference(ctx.text).hasPreference || isPreferenceExpression(ctx.text))
+  ) {
+    const membershipSkill = skills.find((skill) => skill.name === "membership");
+    if (membershipSkill) {
+      return await membershipSkill.handle(ctx);
+    }
+  }
+
   const qixiActivityPattern = /七夕(?:打卡|活动|碰出好喜气)|七夕.*(?:怎么玩|有什么)/;
   if (qixiActivityPattern.test(ctx.text)) {
     const activityIntroSkill = skills.find((skill) => skill.name === "activity-intro");
@@ -97,7 +111,33 @@ async function routeBySkills(ctx: SkillContext): Promise<AgentResponse | null> {
     }
   }
 
-  const productNamePattern = /茉莉拿铁|瑞幸茉莉|春季茉莉|精选面膜|保湿面膜|屈臣氏面膜|桂花定胜糕|定胜糕(?:礼盒)?|知味观糕点|七夕限定礼盒|七夕礼盒|心意礼盒|七夕礼品/;
+  // 打卡地点列表查询直接走 check-in，确保返回地点卡片。
+  if (isCheckInSpotsQuery(ctx.text)) {
+    const checkInSkill = skills.find((skill) => skill.name === "check-in");
+    if (checkInSkill) {
+      return await checkInSkill.handle(ctx);
+    }
+  }
+
+  // 亲子用餐属于带决策维度的餐厅推荐，直接进入专用分析分支。
+  const familyDiningPattern = /亲子|带(?:小孩|孩子|宝宝|娃).*餐|儿童友好.*餐厅|餐厅.*(?:亲子|孩子|儿童)/;
+  if (familyDiningPattern.test(ctx.text)) {
+    const restaurantSkill = skills.find((skill) => skill.name === "restaurant-recommend");
+    if (restaurantSkill) {
+      return await restaurantSkill.handle(ctx);
+    }
+  }
+
+// Deterministic pattern matching for product/gift recommendation — bypass LLM classifier
+// "七夕适合买什么/七夕送什么/情人节买什么/纪念日送什么/有什么伴手礼" → product-recommend (多商品卡)
+if (isProductRecommendIntent(ctx.text)) {
+  const productRecommendSkill = skills.find((skill) => skill.name === "product-recommend");
+  if (productRecommendSkill) {
+    return await productRecommendSkill.handle(ctx);
+  }
+}
+
+const productNamePattern = /茉莉拿铁|瑞幸茉莉|春季茉莉|精选面膜|保湿面膜|屈臣氏面膜|桂花定胜糕|定胜糕(?:礼盒)?|知味观糕点|七夕限定礼盒|七夕礼盒|心意礼盒|七夕礼品/;
   if (productNamePattern.test(ctx.text)) {
     const productIntroSkill = skills.find((skill) => skill.name === "product-intro");
     if (productIntroSkill) {
@@ -188,7 +228,9 @@ async function classifySkillIntent(text: string): Promise<string | null> {
         + "- 联系SA导购：\"联系专属顾问\"、\"有SA吗\"\n"
         + "- 重要：当对话上下文最近提到了某个品牌，用户追问\"新品\"\"新款\"\"到货\"\"有什么\"\"有吗\"等，应路由到 store-consult 而非 activity-recommend\n"
         + "- 重要：\"新鲜好物\"\"好物推荐\"\"生鲜\"等商品推荐路由到 store-consult，不属于 activity-recommend\n\n"
-        + "### service-qa（商场服务与餐饮美食咨询）\n"
+        + "### product-recommend（节日/送礼商品推荐）\n"
+        + "- 节日或送礼场景下挑什么商品:\"七夕适合买什么\"、\"七夕送什么好\"、\"情人节买什么\"、\"纪念日送什么\"、\"有什么伴手礼推荐\"\n"
+        + "- 返回多张精选商品卡(含图与活动价)。重要:用户已说出具体商品名(如\"茉莉拿铁\"\"七夕礼盒\")要查单品详情时,走 product-intro,不走本skill。\"送什么品牌\"等品牌推荐仍走 store-consult。\n\n"
         + "- 餐饮推荐：\"今天吃什么\"、\"午餐推荐\"、\"晚餐吃什么\"、\"有什么好吃的\"、\"吃什么\"、\"有啥吃的\"\n"
         + "- 餐厅信息：\"新荣记\"、\"大董\"、\"鼎泰丰\"、\"海底捞\"、\"喜茶\"、\"美食广场\"等餐厅推荐与信息\n"
         + "- 商场服务：\"服务台\"、\"轮椅\"、\"退换货\"、\"邮寄\"、\"营业时间\"、\"失物招领\"\n"
