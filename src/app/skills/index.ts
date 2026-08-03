@@ -6,7 +6,6 @@ import { couponSkill } from "./coupon";
 import { serviceQASkill } from "./service-qa";
 import { membershipSkill } from "./membership";
 import { parkingSkill } from "./parking";
-import { activityRecommendSkill } from "./activity-recommend";
 import { storeConsultSkill } from "./store-consult";
 import { checkInSkill } from "./check-in";
 import { redPacketUsageSkill } from "./red-packet-usage";
@@ -14,9 +13,11 @@ import { activityIntroSkill } from "./activity-intro";
 import { productIntroSkill } from "./product-intro";
 import { productRecommendSkill } from "./product-recommend";
 import { weatherSkill } from "./weather";
-import { restaurantRecommendSkill } from "./restaurant-recommend";
+import { storeRecommendSkill } from "./store-recommend";
+import { activityBookingSkill } from "./activity-booking";
 
 export const skills: Skill[] = [
+  activityBookingSkill,
   appointmentSkill,
   queueSkill,
   crossSellSkill,
@@ -25,12 +26,11 @@ export const skills: Skill[] = [
   parkingSkill,
   storeConsultSkill,
   serviceQASkill,
-  activityRecommendSkill,
   activityIntroSkill,
   productIntroSkill,
   productRecommendSkill,
   checkInSkill,
   redPacketUsageSkill,
   weatherSkill,
-  restaurantRecommendSkill,
+  storeRecommendSkill,
 ];

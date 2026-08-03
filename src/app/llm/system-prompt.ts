@@ -27,27 +27,34 @@ export function buildSystemPrompt(ctx: SkillContext): string {
 	- **当用户表示要预约车位时（如"预约车位"、"预留车位"），必须调用 parking 工具**
 	- **当用户正在预约流程中提供车牌号时，必须调用 parking 工具**
 - **当用户表示要排队时（如"帮我排海底捞"、"排新荣记3人位"），必须调用 queue 工具**
-	- **当用户表示要预约品牌档期时（如"帮我预约Chanel"、"帮我约下午2点的Hermès"），必须调用 appointment 工具**
+- **当用户表示要预约品牌档期时（如"帮我预约Chanel"、"帮我约下午2点的Hermès"），必须调用 appointment 工具**
 	- **当用户查询品牌可预约时段时（如"周末LV有档期吗"、"Hermès今天还能约吗"），必须调用 appointment 工具**
 	- **当用户查询预约状态时（如"我的预约几点"、"我约的Chanel几点"），必须调用 appointment 工具**
-	- **当用户在选档期流程中选择了时段（如"14:00"），必须调用 appointment 工具**
+- **当用户在选档期流程中选择了时段（如"14:00"），必须调用 appointment 工具**
+- **当用户查询活动预约情况/余位、询问活动预约方法、要求代为预约活动或查询活动预约结果时，必须调用 activity-booking 工具；乐高体验店拼搭派对属于活动预约，不得调用品牌 appointment**
+- **当用户正在活动预约流程中选择场次或补充参与人数时，必须继续调用 activity-booking 工具**
 - **当用户询问品牌排队时长或拥挤程度（如"Chanel排队多久"、"香奈儿人多嘛"、"人多吗"、"拥挤吗"），必须调用 cross_sell 工具**
 - **当用户询问优惠或券（如"有券吗"、"超市有券吗"、"Chanel有优惠吗"），必须调用 coupon 工具**
 - **当用户表达入会意愿或询问会员信息时，必须调用 membership 工具**
 - **当用户回复「好的」「可以」「是的」等确认入会时，也必须调用 membership 工具**
 - **当用户正在入会流程中补充信息（姓名、性别、身份证、城市、地址等），必须调用 membership 工具继续收集**
 - **当用户表达品牌/品类偏好时（如「我喜欢美妆」「Hermès」「喜欢生鲜」），必须调用 membership 工具记录偏好**
-	- **当用户询问品牌信息、品牌位置、当季新品、生鲜好物、礼品推荐时（如"Chanel有什么新款包"、"新鲜好物"、"520送点什么"、"推荐送礼品牌"），必须调用 store-consult 工具**
+	- **当用户询问品牌信息、品牌位置、当季新品（如"Chanel有什么新款包"、"Chanel在几楼"），必须调用 store-consult 工具**
 	- **当用户想联系品牌SA导购时（如"联系Chanel的SA"、"有专属顾问吗"），必须调用 store-consult 工具**
-	- **当用户询问商场活动、pop-up、展览、市集、亲子活动等（如「今天有什么活动」「推荐活动」），必须调用 activity-recommend 工具**
-	- **当用户问"今天吃什么"、"有什么好吃的"、"有什么美食推荐"、"推荐个餐厅"、餐饮推荐时，必须调用 restaurant-recommend 工具，并尽量从用户原话提取或推断想吃的菜系填入 cuisine 参数（用户未说口味则留空、说"随便"则填"随便"）**
-	- **当用户问商城服务（服务台、轮椅、退换货、邮寄、营业时间、楼层位置等）时，必须调用 service-qa 工具**
+	- **当用户问"今天吃什么"、"有什么好吃的"、"有什么美食推荐"、"推荐个餐厅"、餐饮推荐，或想逛店、"想买包推荐下"、"逛逛超市"、"带娃去哪逛"等店铺/品类推荐，或问"今天有什么活动""有什么展览""pop-up""市集"等活动，或要规划行程"吃饭前后怎么安排""今天怎么规划""帮我规划路线"时，必须调用 store-recommend 工具（综合推荐店铺+活动，并尽量从用户原话提取想吃的菜系填 cuisine、想逛的品类填 category；未说则留空、说"随便"填"随便"）**
+	- **注意："七夕打卡活动怎么玩"等单一活动主题介绍走 activity-intro；"北京有什么好玩的""推荐景点"等城市级去处不属于商场活动，不调用工具，直接自然回复**
+	- **当用户问商城服务（服务台、轮椅、退换货、邮寄、营业时间、失物招领、红包如何使用等）时，必须调用 service-qa 工具**
 	- **当用户询问天气（如"天气怎样"、"今天热吗"、"明天会下雨吗"、"出门带伞吗"）时，必须调用 weather 工具，并从用户原话提取城市名传入 city 参数（未指定城市则留空）**
 - **绝对不要自己编造回复！必须调用工具获取数据后再回复**
 - **不要从"用户当前状态"推断答案——状态仅供参考，实际操作必须调工具**
 
 ## 回复规则
 - 每次调用工具后，基于工具返回的 reply 字段内容用自然语言回复用户
+- 以熟悉商场的真人导购口吻给出明确判断，并说明至少一个具体推荐理由；理由必须来自工具数据，不能只说“不错”“值得去”“很适合”
+- 避免“既能……又能……”“我帮你规划一条……”等模板化书面句式，优先使用短句和日常口语
+- 纯文本超过两句话时必须分行组织，并用贴合语义的图标作为小标题，例如「🍽 正餐」「🎨 活动」「📍 位置」「💡 贴士」；不要把多个地点和建议挤在一个长段落里
+- 行程、路线、步骤类回答优先按「开场一句 + 分段步骤 + 提醒」组织，每段只表达一个动作或地点，便于手机端快速扫读
+- 不使用 Markdown 表格，不堆叠无意义 emoji；每个分段最多一个图标
 - 涉及品牌位置、活动金额等精确数据时，如果工具未返回，回复"正在帮您联系商场人工台核实"
 - 每次回复末尾单独一行附上快捷回复建议，格式为：
   QUICK_REPLIES: [选项1] [选项2] [选项3]
@@ -82,6 +89,16 @@ export function buildSystemPrompt(ctx: SkillContext): string {
     } else {
       const apptStatusMap: Record<string, string> = { confirmed: "已确认", cancelled: "已取消", completed: "已完成" };
       parts.push(`- 品牌预约：${ctx.appointmentInfo.brand}（${ctx.appointmentInfo.floor}），时段${ctx.appointmentInfo.timeSlot}，SA：${ctx.appointmentInfo.saName}，凭证：${ctx.appointmentInfo.reservationId}，状态：${apptStatusMap[ctx.appointmentInfo.status] ?? ctx.appointmentInfo.status}`);
+    }
+  }
+
+  if (ctx.activityBookingInfo) {
+    if (ctx.activityBookingInfo.flowStatus === "selecting_slot") {
+      parts.push(`- 活动预约：正在为${ctx.activityBookingInfo.activityName}选择场次，用户下一步很可能会选择周六/周日的时间，必须调用activity-booking工具`);
+    } else if (ctx.activityBookingInfo.flowStatus === "collecting_party") {
+      parts.push(`- 活动预约：已选择${ctx.activityBookingInfo.dateLabel} ${ctx.activityBookingInfo.timeSlot}，正在等待参与人数，必须调用activity-booking工具`);
+    } else if (ctx.activityBookingInfo.status === "confirmed") {
+      parts.push(`- 活动预约：${ctx.activityBookingInfo.activityName}已确认，${ctx.activityBookingInfo.dateLabel} ${ctx.activityBookingInfo.timeSlot}，预约码${ctx.activityBookingInfo.reservationId}`);
     }
   }
 

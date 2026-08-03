@@ -1,5 +1,5 @@
 import type { AgentSideEffects, SkillContext } from "../../agent/types";
-import type { ActivityIntroCard, AppointmentCard, BrandCard, CheckInCard, CheckInSpotsCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingShoppingGuideCard, ProductIntroCard, CouponCard, QueueCard, RedPacketFlowCard, ReservationCard, RestaurantCard } from "../../types";
+import type { ActivityBookingCard, ActivityIntroCard, AppointmentCard, BrandCard, CheckInCard, CheckInSpotsCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingShoppingGuideCard, PlanCard, ProductIntroCard, CouponCard, QueueCard, RedPacketFlowCard, ReservationCard, RestaurantCard } from "../../types";
 import { skills } from "../../skills";
 
 export interface ToolResult {
@@ -22,6 +22,8 @@ export interface ToolResult {
   checkInSpotsCard?: CheckInSpotsCard;
   redPacketFlowCard?: RedPacketFlowCard;
   productRecommendCards?: ProductIntroCard[];
+  planCard?: PlanCard;
+  activityBookingCard?: ActivityBookingCard;
 }
 
 /**
@@ -80,6 +82,7 @@ export function executeTool(
       checkInSpotsCard: response.checkInSpotsCard,
       redPacketFlowCard: response.redPacketFlowCard,
       productRecommendCards: response.productRecommendCards,
+      activityBookingCard: response.activityBookingCard,
     };
   });
 }

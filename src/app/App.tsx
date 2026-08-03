@@ -13,7 +13,7 @@ import { DtxActivityPage } from "./pages/DtxActivityPage";
 import { WarmServicePage } from "./pages/WarmServicePage";
 import { RentalPage } from "./pages/RentalPage";
 import { MembershipPage } from "./pages/MembershipPage";
-import type { Message, ParkingReservation, QueueInfo, UserProfile, AppointmentInfo } from "./types";
+import type { ActivityBookingInfo, Message, ParkingReservation, QueueInfo, UserProfile, AppointmentInfo } from "./types";
 import { SIMULATED_USER_PROFILE } from "./data/user-profile";
 
 export default function App() {
@@ -24,6 +24,7 @@ export default function App() {
   const [parkingReservation, setParkingReservation] = useState<ParkingReservation | null>(null);
   const [queueInfo, setQueueInfo] = useState<QueueInfo | null>(null);
   const [appointmentInfo, setAppointmentInfo] = useState<AppointmentInfo | null>(null);
+  const [activityBookingInfo, setActivityBookingInfo] = useState<ActivityBookingInfo | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>(SIMULATED_USER_PROFILE);
   const [currentPage, setCurrentPage] = useState<"mall-home" | "home" | "parking" | "coupon" | "activity" | "warm-service" | "rental" | "membership">("mall-home");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -143,7 +144,7 @@ export default function App() {
     try {
       // 4. Call LLM with streaming
       const response = await route(
-        { text: value, userProfile, parkingInfo, parkingReservation, queueInfo, appointmentInfo },
+        { text: value, userProfile, parkingInfo, parkingReservation, queueInfo, appointmentInfo, activityBookingInfo },
         (token) => {
           // Stream each token into the placeholder message
           setMessages((p) =>
@@ -171,6 +172,9 @@ export default function App() {
       if (response.sideEffects && "appointmentInfo" in response.sideEffects) {
         setAppointmentInfo(response.sideEffects.appointmentInfo ?? null);
       }
+      if (response.sideEffects && "activityBookingInfo" in response.sideEffects) {
+        setActivityBookingInfo(response.sideEffects.activityBookingInfo ?? null);
+      }
 
       // 6. Finalize the message with full text, cards, quickReplies
       setMessages((p) => {
@@ -197,6 +201,8 @@ export default function App() {
                 checkInSpotsCard: response.checkInSpotsCard,
                 redPacketFlowCard: response.redPacketFlowCard,
                 productRecommendCards: response.productRecommendCards,
+                planCard: response.planCard,
+                activityBookingCard: response.activityBookingCard,
                 streaming: false,
               }
             : m,

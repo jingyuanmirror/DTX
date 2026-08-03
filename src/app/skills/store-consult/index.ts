@@ -187,8 +187,13 @@ function detectBrandFromContext(text: string, recentHistory: ChatMessage[]): str
 
 // ── Gift / recommendation detection ──────────────────────────────────
 
-const GIFT_KEYWORDS = ["送礼", "送人", "礼物", "推荐个", "送老婆", "送太太", "送长辈", "送朋友", "商务送礼", "送伴侣", "送点", "送点什么", "520", "情人", "情人节", "纪念日", "送女友", "送男友", "送闺蜜"];
-const RECOMMEND_KEYWORDS = ["推荐品牌", "推荐个品牌", "有什么品牌", "适合送", "帮我推荐", "推荐一下", "新鲜好物", "好物推荐", "有什么好物", "推荐好物", "生鲜"];
+// ── Gift / recommendation detection ──────────────────────────────────
+// 注意边界:店铺/品牌推荐(如"推荐个送太太的品牌""想买包推荐下""送什么品牌""生鲜超市推荐")
+// 已收口到 store-recommend。这里的"送礼"检测仅保留**带具体物品的咨询型**表述
+// (如"送老婆送什么""送长辈买什么"),让带品牌上下文的追问仍能走品牌咨询;纯"推荐个…品牌"
+// 这种推荐意图不在此匹配(交由 store-recommend 处理),避免误切。
+const GIFT_KEYWORDS = ["送礼", "送人", "礼物", "送点什么好", "送老婆送什么", "送长辈送什么", "送朋友送什么", "送伴侣送什么", "520送什么", "情人节送什么", "纪念日送什么"];
+const RECOMMEND_KEYWORDS: string[] = [];
 
 function isGiftOrRecommendQuery(text: string): boolean {
   return [...GIFT_KEYWORDS, ...RECOMMEND_KEYWORDS].some((kw) => text.includes(kw));
@@ -360,8 +365,8 @@ async function isStoreConsultQuery(text: string, recentHistory?: ChatMessage[]):
         + "- 排队取号/排队进度（属于 queue）\n"
         + "- 询问优惠/领券（属于 coupon）\n"
         + "- 会员注册/入会/会员信息（属于 membership）\n"
-        + "- 商场服务/餐厅推荐/退换货（属于 service-qa）\n"
-        + "- 商场活动/展览/pop-up（属于 activity-recommend）\n"
+        + "- 商场服务/退换货（属于 service-qa）\n"
+        + "- 餐厅推荐/店铺推荐/活动推荐/行程规划（属于 store-recommend）\n"
         + "如果是品牌店铺咨询，输出 YES；否则输出 NO。只允许输出 YES 或 NO。",
     },
     {

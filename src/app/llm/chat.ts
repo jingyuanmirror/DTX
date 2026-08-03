@@ -1,4 +1,4 @@
-import type { AgentResponse, SkillContext } from "../agent/types";
+import type { AgentResponse, AgentSideEffects, SkillContext } from "../agent/types";
 import type { ChatMessage, ToolCall } from "./types";
 import { chatCompletion } from "./client";
 import { buildSystemPrompt } from "./system-prompt";
@@ -76,6 +76,7 @@ export async function chat(
   let collectedCheckInSpotsCard: AgentResponse["checkInSpotsCard"] = undefined;
   let collectedRedPacketFlowCard: AgentResponse["redPacketFlowCard"] = undefined;
   let collectedProductRecommendCards: AgentResponse["productRecommendCards"] = undefined;
+  let collectedActivityBookingCard: AgentResponse["activityBookingCard"] = undefined;
 
   const newMessages: ChatMessage[] = [{ role: "user", content: userText }];
 
@@ -121,6 +122,7 @@ export async function chat(
         checkInSpotsCard: collectedCheckInSpotsCard,
         redPacketFlowCard: collectedRedPacketFlowCard,
         productRecommendCards: collectedProductRecommendCards,
+        activityBookingCard: collectedActivityBookingCard,
       };
 
       // Merge side effects
@@ -172,6 +174,9 @@ export async function chat(
         if ("appointmentInfo" in toolResult.sideEffects) {
           collectedSideEffects.appointmentInfo = toolResult.sideEffects.appointmentInfo;
         }
+        if ("activityBookingInfo" in toolResult.sideEffects) {
+          collectedSideEffects.activityBookingInfo = toolResult.sideEffects.activityBookingInfo;
+        }
       }
 
       // Collect cards
@@ -192,6 +197,7 @@ export async function chat(
       if (toolResult.checkInSpotsCard) collectedCheckInSpotsCard = toolResult.checkInSpotsCard;
       if (toolResult.redPacketFlowCard) collectedRedPacketFlowCard = toolResult.redPacketFlowCard;
       if (toolResult.productRecommendCards) collectedProductRecommendCards = toolResult.productRecommendCards;
+      if (toolResult.activityBookingCard) collectedActivityBookingCard = toolResult.activityBookingCard;
 
       // If a card was returned, short-circuit: use the tool's reply directly
       const hasCard = toolResult.card || toolResult.membershipAuthorizationCard || toolResult.newMemberOfferCard
@@ -200,7 +206,7 @@ export async function chat(
         || toolResult.reservationCard || toolResult.coupons || toolResult.brandCards
         || toolResult.restaurantCards || toolResult.appointmentCard
         || toolResult.checkInCard || toolResult.checkInSpotsCard || toolResult.redPacketFlowCard
-        || toolResult.productRecommendCards;
+        || toolResult.productRecommendCards || toolResult.activityBookingCard;
       if (hasCard) {
         shouldShortCircuit = true;
         const data = toolResult.data as { reply?: string; quickReplies?: string[] };
@@ -240,6 +246,7 @@ export async function chat(
         checkInSpotsCard: collectedCheckInSpotsCard,
         redPacketFlowCard: collectedRedPacketFlowCard,
         productRecommendCards: collectedProductRecommendCards,
+        activityBookingCard: collectedActivityBookingCard,
       };
       if (Object.keys(collectedSideEffects).length > 0) {
         response.sideEffects = collectedSideEffects as AgentSideEffects;
@@ -274,7 +281,8 @@ export async function chat(
       checkInCard: collectedCheckInCard,
       checkInSpotsCard: collectedCheckInSpotsCard,
       redPacketFlowCard: collectedRedPacketFlowCard,
-        productRecommendCards: collectedProductRecommendCards,
+      productRecommendCards: collectedProductRecommendCards,
+      activityBookingCard: collectedActivityBookingCard,
     },
     newMessages,
   };

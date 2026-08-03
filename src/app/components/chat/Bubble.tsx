@@ -16,6 +16,8 @@ import { NewMemberOfferCardBubble } from "../cards/NewMemberOfferCardBubble";
 import { ParkingShoppingGuideCardBubble } from "../cards/ParkingShoppingGuideCardBubble";
 import { ActivityIntroCardBubble } from "../cards/ActivityIntroCardBubble";
 import { ProductIntroCardBubble } from "../cards/ProductIntroCardBubble";
+import { PlanCardBubble } from "../cards/PlanCardBubble";
+import { ActivityBookingCardBubble } from "../cards/ActivityBookingCardBubble";
 import { CatMascot } from "../CatMascot";
 
 export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (text: string) => void }) {
@@ -23,7 +25,7 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
   const hasRichCard = Boolean(
     msg.card || msg.parkingCard || msg.reservationCard || msg.queueCard || msg.coupons?.length
       || msg.brandCards?.length || msg.restaurantCards?.length || msg.appointmentCard || msg.checkInCard || msg.checkInSpotsCard || msg.redPacketFlowCard || msg.membershipAuthorizationCard
-      || msg.newMemberOfferCard || msg.parkingShoppingGuideCard || msg.activityIntroCard || msg.productIntroCard || msg.productRecommendCards?.length,
+      || msg.newMemberOfferCard || msg.parkingShoppingGuideCard || msg.activityIntroCard || msg.productIntroCard || msg.productRecommendCards?.length || msg.planCard || msg.activityBookingCard,
   );
 
   return (
@@ -86,6 +88,8 @@ export function Bubble({ msg, onQuickReply }: { msg: Message; onQuickReply: (tex
           {isAgent && msg.productRecommendCards && msg.productRecommendCards.map((card, i) => (
             <ProductIntroCardBubble key={`${card.brand}-${card.name}-${i}`} card={card} />
           ))}
+          {isAgent && msg.planCard && <PlanCardBubble card={msg.planCard} />}
+          {isAgent && msg.activityBookingCard && <ActivityBookingCardBubble card={msg.activityBookingCard} />}
           {isAgent && msg.reservationCard && <ReservationCardBubble card={msg.reservationCard} />}
           {isAgent && msg.queueCard && <QueueCardBubble card={msg.queueCard} />}
           {isAgent && msg.brandCards && <BrandCardCarousel cards={msg.brandCards} />}

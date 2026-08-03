@@ -2,6 +2,7 @@ import type { AgentResponse, SkillContext } from "./types";
 import { skills } from "../skills";
 import { setStoreConsultHistory, resetStoreConsultState } from "../skills/store-consult";
 import { isProductRecommendIntent } from "../skills/product-recommend";
+import { isStoreRecommendIntent } from "../skills/store-recommend";
 import { isCheckInSpotsQuery } from "../skills/check-in";
 import { detectPreference, isPreferenceExpression } from "../utils/preference";
 import { chat } from "../llm/chat";
@@ -11,9 +12,19 @@ import type { ChatMessage } from "../llm/types";
 /** Shared conversation history across turns */
 let llmHistory: ChatMessage[] = [];
 
+/**
+ * Last skill that actually handled a turn (deterministic/classifier/fallback alike).
+ * Used as short-term context: when the next user message is a context-less follow-up
+ * (e.g. "换个口味"/"再推荐一个"/"另一个呢"), the router reuses this skill instead of
+ * letting the bare-keyword patterns miss and fall through to the LLM classifier —
+ * which historically mis-routed these short replies.
+ */
+let lastActiveSkill: string | null = null;
+
 /** Reset LLM conversation history (e.g. on app re-mount) */
 export function resetLLMHistory() {
   llmHistory = [];
+  lastActiveSkill = null;
   resetStoreConsultState();
 }
 
@@ -29,15 +40,16 @@ export async function route(
   // Always record the user message to history so context flows across turns
   llmHistory = [...llmHistory, { role: "user", content: ctx.text }];
 
-  const skillResponse = await routeBySkills(ctx);
-  if (skillResponse) {
+  const { response, skillName } = await routeBySkills(ctx);
+  if (response) {
     // Record the skill's response so next turn's classifier sees it
-    llmHistory = [...llmHistory, { role: "assistant", content: skillResponse.text }].slice(-30);
-    return skillResponse;
+    llmHistory = [...llmHistory, { role: "assistant", content: response.text }].slice(-30);
+    if (skillName) lastActiveSkill = skillName;
+    return response;
   }
 
   try {
-    const { response, newMessages } = await chat(
+    const { response: llmResponse, newMessages } = await chat(
       ctx.text,
       ctx,
       llmHistory,
@@ -46,8 +58,11 @@ export async function route(
 
     // Append new messages to persistent history
     llmHistory = [...llmHistory, ...newMessages].slice(-30);
+    // LLM fallback means no deterministic skill handled this turn, so there's no
+    // skill to "continue" next turn — clear the short-term context.
+    lastActiveSkill = null;
 
-    return response;
+    return llmResponse;
   } catch (error) {
     console.warn("LLM unavailable, falling back to default reply:", error);
     return {
@@ -58,38 +73,75 @@ export async function route(
 }
 
 /**
- * Skill router — check in-progress flows first, then classify.
+ * Short, context-less follow-up phrases that should reuse the last active skill
+ * instead of being classified from scratch. These typically omit any explicit
+ * topic keyword (e.g. "换个口味", "再推荐一个", "另一个呢"), so the deterministic
+ * patterns miss and the bare LLM classifier historically mis-routed them.
  */
-async function routeBySkills(ctx: SkillContext): Promise<AgentResponse | null> {
+const FOLLOWUP_PATTERN =
+  /换个(口味|品类|方向|店|家|餐厅|品牌)|再(推荐|来|换|给)(一家|一个|几个|别的|别的店|点)?|再来一家|另一(个|家|家店)|第[二三四五]家|这家(店|餐厅|怎么样|如何)|对比一下|继续(推荐|逛|吃)?|(就|那)(这家|这个)|便宜(点|些|的)|贵(点|些|的)|有(没有|没有更)(便宜|贵|好)的|还要(别的|其他|一个)|就这些|还有(别的|其他|什么)|这家不错|不错(呀|的|啊)/;
+
+function isFollowUp(text: string): boolean {
+  return text.length <= 16 && FOLLOWUP_PATTERN.test(text);
+}
+
+/**
+ * Skills where "continue the same topic" makes sense — i.e. a follow-up like
+ * "换个口味" should reuse them rather than re-classify. Flows that capture their
+ * own state (parking/appointment/membership in-flow) are excluded: those route by
+ * state, not by follow-up phrasing.
+ */
+const FOLLOWUP_REUSABLE_SKILLS = new Set([
+  "store-recommend",
+  "store-consult",
+  "product-recommend",
+  "product-intro",
+  "coupon",
+  "service-qa",
+]);
+
+/**
+ * Skill router — check in-progress flows first, then classify.
+ * Returns the matched response plus the skill name that handled it (for the
+ * `lastActiveSkill` short-term context). The LLM classifier branch also reports
+ * its chosen skill name so follow-up reuse keeps working after a classifier hit.
+ */
+async function routeBySkills(ctx: SkillContext): Promise<{ response: AgentResponse | null; skillName: string | null }> {
+  /** Invoke a skill by name and wrap its response with the skill name. */
+  const run = async (name: string): Promise<{ response: AgentResponse | null; skillName: string | null }> => {
+    const skill = skills.find((s) => s.name === name);
+    if (!skill) return { response: null, skillName: null };
+    return { response: await skill.handle(ctx), skillName: name };
+  };
   // If user is in the middle of a parking reservation (collecting plate), always route to parking skill
   if (ctx.parkingReservation?.status === "collecting_plate") {
-    const parkingSkill = skills.find((skill) => skill.name === "parking");
-    if (parkingSkill) {
-      return await parkingSkill.handle(ctx);
-    }
+    return run("parking");
+  }
+
+  // 活动预约的场次/人数收集是连续流程，短回复必须留在本 skill。
+  if (ctx.activityBookingInfo?.flowStatus && !/入会|会员权益|开通会员/.test(ctx.text)) {
+    return run("activity-booking");
+  }
+
+  if (
+    ctx.activityBookingInfo?.status === "confirmed"
+    && /我的预约|查看.*预约|预约状态|预约成功了吗/.test(ctx.text)
+  ) {
+    return run("activity-booking");
   }
 
   // If user is in the middle of appointment slot selection, always route to appointment skill
   if (ctx.appointmentInfo?.flowStatus === "selecting_slot") {
-    const appointmentSkill = skills.find((skill) => skill.name === "appointment");
-    if (appointmentSkill) {
-      return await appointmentSkill.handle(ctx);
-    }
+    return run("appointment");
   }
 
   // If user is in the middle of enrollment, always route to membership skill
   if (ctx.userProfile._enrollmentForm && !ctx.userProfile.isMember) {
-    const membershipSkill = skills.find((skill) => skill.name === "membership");
-    if (membershipSkill) {
-      return await membershipSkill.handle(ctx);
-    }
+    return run("membership");
   }
 
   if (ctx.userProfile._membershipAuthorizationPending && !ctx.userProfile.isMember) {
-    const membershipSkill = skills.find((skill) => skill.name === "membership");
-    if (membershipSkill) {
-      return await membershipSkill.handle(ctx);
-    }
+    return run("membership");
   }
 
   // 入会后的下一条偏好表达优先回到 membership，完成画像记录闭环。
@@ -97,82 +149,69 @@ async function routeBySkills(ctx: SkillContext): Promise<AgentResponse | null> {
     ctx.userProfile._justOnboarded
     && (detectPreference(ctx.text).hasPreference || isPreferenceExpression(ctx.text))
   ) {
-    const membershipSkill = skills.find((skill) => skill.name === "membership");
-    if (membershipSkill) {
-      return await membershipSkill.handle(ctx);
-    }
+    return run("membership");
+  }
+
+  // ── Follow-up reuse (上下文记忆) ──────────────────────────────────
+  // 短的无主语追问(如"换个口味""再推荐一个""另一家呢")不携带任何主题关键词,
+  // 确定性 pattern 会全部落空,只靠 LLM 分类器极易误判。此处沿用上一轮激活的
+  // 推荐/咨询类 skill。仅对纯文本延续类 skill 生效;流程态 skill(parking 等)
+  // 由各自状态决定,不在此列。仍允许用户在新问句里带明确关键词自行跳转 ——
+  // 后面的 pattern 会优先生效,所以但这步只接管"谁都不认领"的纯追问短句。
+  if (isFollowUp(ctx.text) && lastActiveSkill && FOLLOWUP_REUSABLE_SKILLS.has(lastActiveSkill)) {
+    return run(lastActiveSkill);
   }
 
   const qixiActivityPattern = /七夕(?:打卡|活动|碰出好喜气)|七夕.*(?:怎么玩|有什么)/;
   if (qixiActivityPattern.test(ctx.text)) {
-    const activityIntroSkill = skills.find((skill) => skill.name === "activity-intro");
-    if (activityIntroSkill) {
-      return await activityIntroSkill.handle(ctx);
-    }
+    return run("activity-intro");
+  }
+
+  const activityBookingPattern =
+    /(?:乐高|拼搭派对|亲子烘焙).*(?:预约|报名|名额|场次|余位)|(?:预约|报名).*(?:乐高|拼搭派对|亲子烘焙|活动)|活动(?:怎么|如何)?(?:预约|报名)|活动预约(?:情况|方法|状态)?|我的活动预约/;
+  if (activityBookingPattern.test(ctx.text)) {
+    return run("activity-booking");
   }
 
   // 打卡地点列表查询直接走 check-in，确保返回地点卡片。
   if (isCheckInSpotsQuery(ctx.text)) {
-    const checkInSkill = skills.find((skill) => skill.name === "check-in");
-    if (checkInSkill) {
-      return await checkInSkill.handle(ctx);
-    }
+    return run("check-in");
   }
 
-  // 亲子用餐属于带决策维度的餐厅推荐，直接进入专用分析分支。
+  // 亲子用餐属于带决策维度的餐厅推荐，直接进入 store-recommend 餐饮分支。
   const familyDiningPattern = /亲子|带(?:小孩|孩子|宝宝|娃).*餐|儿童友好.*餐厅|餐厅.*(?:亲子|孩子|儿童)/;
   if (familyDiningPattern.test(ctx.text)) {
-    const restaurantSkill = skills.find((skill) => skill.name === "restaurant-recommend");
-    if (restaurantSkill) {
-      return await restaurantSkill.handle(ctx);
-    }
+    return run("store-recommend");
   }
 
 // Deterministic pattern matching for product/gift recommendation — bypass LLM classifier
 // "七夕适合买什么/七夕送什么/情人节买什么/纪念日送什么/有什么伴手礼" → product-recommend (多商品卡)
 if (isProductRecommendIntent(ctx.text)) {
-  const productRecommendSkill = skills.find((skill) => skill.name === "product-recommend");
-  if (productRecommendSkill) {
-    return await productRecommendSkill.handle(ctx);
-  }
+  return run("product-recommend");
 }
 
 const productNamePattern = /茉莉拿铁|瑞幸茉莉|春季茉莉|精选面膜|保湿面膜|屈臣氏面膜|桂花定胜糕|定胜糕(?:礼盒)?|知味观糕点|七夕限定礼盒|七夕礼盒|心意礼盒|七夕礼品/;
   if (productNamePattern.test(ctx.text)) {
-    const productIntroSkill = skills.find((skill) => skill.name === "product-intro");
-    if (productIntroSkill) {
-      return await productIntroSkill.handle(ctx);
-    }
+    return run("product-intro");
   }
 
-  // Deterministic pattern matching for dining queries — bypass LLM classifier
-  // "今天吃什么/吃什么/午餐/晚餐" → service-qa (餐饮推荐)
-  const diningPattern = /今天吃(什么|啥)|吃(什么|啥)(好|呢)?|午餐(吃|推荐)?|晚餐(吃|推荐)?|有什么好吃|有啥好吃/;
-  if (diningPattern.test(ctx.text)) {
-    const serviceQASkill = skills.find((skill) => skill.name === "service-qa");
-    if (serviceQASkill) {
-      return await serviceQASkill.handle(ctx);
-    }
+  // Deterministic pattern matching for store recommend (餐饮/店铺推荐)
+  // "今天吃什么/午餐/晚餐" → store-recommend 餐饮分支(收口结构化推荐)
+  // "想逛逛/想买包/带娃去哪逛/生鲜超市" → store-recommend 零售分支
+  if (isStoreRecommendIntent(ctx.text)) {
+    return run("store-recommend");
   }
 
   // Deterministic pattern matching for crowd/wait-time queries — bypass LLM classifier
   // "人多嘛/人多吗/拥挤吗/排队多久/排队长吗" + brand → cross-sell
   const crowdWaitPattern = /人多[嘛吗？?]|拥挤[嘛吗？?]|排队多久|排队长[嘛吗？?]|要等多久|等多久/;
   if (crowdWaitPattern.test(ctx.text)) {
-    const crossSellSkill = skills.find((skill) => skill.name === "cross-sell");
-    if (crossSellSkill) {
-      return await crossSellSkill.handle(ctx);
-    }
+    return run("cross-sell");
   }
 
   const targetSkillName = await classifySkillIntent(ctx.text);
   if (!targetSkillName) {
-    return null;
-  }
-
-  const targetSkill = skills.find((skill) => skill.name === targetSkillName);
-  if (!targetSkill) {
-    return null;
+    return { response: null, skillName: null };
   }
 
   // Provide chat history to store-consult for context-aware follow-up
@@ -180,7 +219,7 @@ const productNamePattern = /茉莉拿铁|瑞幸茉莉|春季茉莉|精选面膜|
     setStoreConsultHistory(llmHistory.slice(-8));
   }
 
-  return await targetSkill.handle(ctx);
+  return run(targetSkillName);
 }
 
 async function classifySkillIntent(text: string): Promise<string | null> {
@@ -212,36 +251,45 @@ async function classifySkillIntent(text: string): Promise<string | null> {
         + "- 重要路由规则：\"预约\"\"约档期\"关键词 → appointment（优先于queue和cross-sell）\n"
         + "- \"帮我排Chanel\" → queue（\"排\"关键词路由到queue）\n"
         + "- \"Chanel排队多久\"、\"香奈儿人多嘛\"、\"人多吗\"、\"拥挤吗\" → cross-sell（询问排队等候时长/拥挤程度）\n\n"
+        + "### activity-booking（活动预约）\n"
+        + "- 查询活动余位/场次：\"乐高活动还有名额吗\"、\"查看乐高场次\"、\"活动预约情况\"\n"
+        + "- 询问预约方法：\"乐高怎么预约\"、\"活动怎么报名\"\n"
+        + "- 代为预约或查询结果：\"帮我预约乐高\"、\"我的活动预约\"\n"
+        + "- 活动预约优先于品牌 appointment；乐高体验店的拼搭派对属于活动预约，不属于品牌 SA 档期。\n\n"
         + "### membership（会员相关）\n"
         + "- 明确入会意愿：\"我想入会\"、\"帮我入会\"、\"我要入会\"、\"办会员\"、\"给我办会员\"、\"入会吧\"、\"加入会员\"、\"申请会员\"、\"现在入会\"\n"
         + "- 入会确认：\"好的\"、\"可以\"、\"是的\"（上下文涉及入会时）\n"
         + "- 补充个人信息：姓名、性别、身份证号、城市、地址\n"
         + "- 会员权益咨询、偏好表达：\"我喜欢美妆\"、\"Hermès\"\n\n"
-        + "### activity-recommend（活动推荐）\n"
-        + "- 询问商场活动、pop-up、展览：\"今天有什么活动\"、\"推荐活动\"\n"
-        + "- 注意：\"新品\"\"新款\"\"到货\"等关键词在品牌上下文中属于 store-consult，不属于 activity-recommend\n\n"
         + "### store-consult（品牌店铺咨询）\n"
         + "- 品牌信息/位置/品类：\"Chanel在几楼\"、\"DTX有没有Moncler\"\n"
         + "- 当季新品/到货：\"Chanel有什么新款包\"、\"有新品吗\"（上下文提到品牌时）\n"
-        + "- 礼品推荐/品牌推荐：\"推荐送礼品牌\"、\"送太太什么好\"、\"520送点什么\"、\"送点什么\"、\"情人节送什么\"、\"纪念日送什么\"\n"
-        + "- 生鲜好物推荐：\"新鲜好物\"、\"有什么好物\"、\"生鲜区\"、\"今日上新\"、\"超市推荐\"\n"
         + "- 联系SA导购：\"联系专属顾问\"、\"有SA吗\"\n"
-        + "- 重要：当对话上下文最近提到了某个品牌，用户追问\"新品\"\"新款\"\"到货\"\"有什么\"\"有吗\"等，应路由到 store-consult 而非 activity-recommend\n"
-        + "- 重要：\"新鲜好物\"\"好物推荐\"\"生鲜\"等商品推荐路由到 store-consult，不属于 activity-recommend\n\n"
+        + "- 物品到店位置查询：\"哪里能买到丝巾\"、\"哪层有手表\"\n"
+        + "- 重要：品牌\"推荐\"类需求（如\"推荐个送太太的品牌\"\"想买包推荐下\"\"520送什么品牌\"）路由到 store-recommend，不属于 store-consult\n"
+        + "- 重要：当对话上下文最近提到了某个品牌，用户追问\"新品\"\"新款\"\"到货\"\"有什么\"\"有吗\"等，应路由到 store-consult 而非 store-recommend\n\n"
+        + "### store-recommend（店铺/餐饮/活动综合推荐）\n"
+        + "- 餐饮推荐：\"今天吃什么\"、\"午餐推荐\"、\"晚餐吃什么\"、\"有什么好吃的\"、\"吃什么\"、\"有啥吃的\"、\"想吃火锅\"、\"求推荐餐厅\"\n"
+        + "- 餐厅信息：\"新荣记\"、\"大董\"、\"鼎泰丰\"、\"海底捞\"、\"喜茶\"、\"美食广场\"等餐厅推荐\n"
+        + "- 店铺/品类推荐：\"想逛逛\"、\"推荐个店\"、\"想买包推荐下\"、\"逛逛超市\"、\"带娃去哪逛\"、\"周末买点家居好物\"、\"生鲜\"、\"亲子\"、\"美妆\"、\"家居\"\n"
+        + "- 活动推荐：\"今天有什么活动\"、\"有什么展览\"、\"近期活动\"、\"pop-up\"、\"鉴赏会\"、\"市集\" 等，综合店铺与活动一起推荐（活动为主、店铺为辅）\n"
+        + "- 行程规划：\"吃饭前后还能安排什么\"、\"今天都能怎么规划\"、\"帮我规划路线\"、\"逛一圈怎么安排\"\n"
+        + "- 亲子餐厅对比（带决策维度）：\"哪个餐厅适合亲子\"\n"
+        + "- 重要边界：查具体品牌位置/新品/联系SA走 store-consult；挑具体商品（\"七夕买什么\"\"送什么商品\"）走 product-recommend;\"七夕打卡活动怎么玩\"等活动介绍走 activity-intro；本skill只负责\"综合推荐店铺/餐厅/活动+行程规划\"\n\n"
         + "### product-recommend（节日/送礼商品推荐）\n"
         + "- 节日或送礼场景下挑什么商品:\"七夕适合买什么\"、\"七夕送什么好\"、\"情人节买什么\"、\"纪念日送什么\"、\"有什么伴手礼推荐\"\n"
-        + "- 返回多张精选商品卡(含图与活动价)。重要:用户已说出具体商品名(如\"茉莉拿铁\"\"七夕礼盒\")要查单品详情时,走 product-intro,不走本skill。\"送什么品牌\"等品牌推荐仍走 store-consult。\n\n"
-        + "- 餐饮推荐：\"今天吃什么\"、\"午餐推荐\"、\"晚餐吃什么\"、\"有什么好吃的\"、\"吃什么\"、\"有啥吃的\"\n"
-        + "- 餐厅信息：\"新荣记\"、\"大董\"、\"鼎泰丰\"、\"海底捞\"、\"喜茶\"、\"美食广场\"等餐厅推荐与信息\n"
+        + "- 返回多张精选商品卡(含图与活动价)。重要:用户已说出具体商品名(如\"茉莉拿铁\"\"七夕礼盒\")要查单品详情时,走 product-intro,不走本skill。\"推荐店铺/品牌\"走 store-recommend。\n\n"
+        + "### service-qa（商场服务咨询）\n"
         + "- 商场服务：\"服务台\"、\"轮椅\"、\"退换货\"、\"邮寄\"、\"营业时间\"、\"失物招领\"\n"
-        + "- 专属红包/打卡红包如何使用、怎么抵扣、怎么花：\"专属红包怎么用\"、\"打卡红包怎么抵扣\"\n\n"
+        + "- 专属红包/打卡红包如何使用、怎么抵扣、怎么花：\"专属红包怎么用\"、\"打卡红包怎么抵扣\"\n"
+        + "- 重要：\"今天吃什么\"、\"餐厅推荐\"、\"有什么活动\"等推荐走 store-recommend，不属于 service-qa\n\n"
         + "### queue / cross-sell / coupon\n"
         + "- 按各skill描述路由\n\n"
         + "重要：要结合上下文理解用户意图。例如：\n"
         + "- 用户说\"快到了帮我留一个\"，虽然没有\"车位\"字眼，但从语境可以判断是停车预约，应路由到 parking。\n"
-        + "- 上一轮对话提到了某个品牌（如Chanel），用户追问\"有新品吗\"\"有什么新款\"\"到货了吗\"等，虽然不包含品牌名，但语境明确是品牌咨询，应路由到 store-consult，而不是 activity-recommend。\n"
-        + "- 只有用\"活动\"\"pop-up\"\"展览\"\"鉴赏会\"等词明确问活动时，才路由到 activity-recommend。\n"
-        + "- \"预约\"\"约档期\"关键词路由到appointment，\"排号\"\"排队\"关键词路由到queue，\"排队多久\"\"人多嘛\"\"人多吗\"\"拥挤吗\"关键词路由到cross-sell。\n\n"
+        + "- 上一轮对话提到了某个品牌（如Chanel），用户追问\"有新品吗\"\"有什么新款\"\"到货了吗\"等，虽然不包含品牌名，但语境明确是品牌咨询，应路由到 store-consult，而不是 store-recommend。\n"
+        + "- \"今天有什么活动\"\"有什么展览\"等问活动的，路由到 store-recommend（活动已并入综合推荐），不是 service-qa。\n"
+        + "- 活动/乐高/拼搭派对的预约报名路由到activity-booking；奢品专柜档期才路由到appointment；\"排号\"\"排队\"关键词路由到queue。\n\n"
         + "若都不适合，输出 NONE。\n"
         + "仅允许输出 skill 名称原文或 NONE，不要输出其他内容。\n\n"
         + `候选skill：\n${skillOptions}`,

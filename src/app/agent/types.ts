@@ -1,4 +1,4 @@
-import type { ActivityIntroCard, AppointmentCard, AppointmentInfo, BrandCard, CheckInCard, CheckInSpotsCard, CouponCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingInfo, ParkingReservation, ParkingShoppingGuideCard, ProductIntroCard, QueueCard, QueueInfo, RedPacketFlowCard, ReservationCard, RestaurantCard, UserProfile } from "../types";
+import type { ActivityBookingCard, ActivityBookingInfo, ActivityIntroCard, AppointmentCard, AppointmentInfo, BrandCard, CheckInCard, CheckInSpotsCard, CouponCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingInfo, ParkingReservation, ParkingShoppingGuideCard, PlanCard, ProductIntroCard, QueueCard, QueueInfo, RedPacketFlowCard, ReservationCard, RestaurantCard, UserProfile } from "../types";
 
 export interface SkillContext {
   text: string;
@@ -7,6 +7,7 @@ export interface SkillContext {
   parkingReservation: ParkingReservation | null;
   queueInfo: QueueInfo | null;
   appointmentInfo: AppointmentInfo | null;
+  activityBookingInfo: ActivityBookingInfo | null;
   /** Structured arguments from the LLM's function call (read alongside `text`). */
   toolArgs?: Record<string, unknown>;
 }
@@ -18,6 +19,7 @@ export interface AgentSideEffects {
   queueInfo?: QueueInfo | null;
   resetQueueNotified?: boolean;
   appointmentInfo?: AppointmentInfo | null;
+  activityBookingInfo?: ActivityBookingInfo | null;
 }
 
 export interface AgentFollowUpMessage {
@@ -40,6 +42,8 @@ export interface AgentFollowUpMessage {
   checkInSpotsCard?: CheckInSpotsCard;
   redPacketFlowCard?: RedPacketFlowCard;
   productRecommendCards?: ProductIntroCard[];
+  planCard?: PlanCard;
+  activityBookingCard?: ActivityBookingCard;
 }
 
 export interface AgentResponse {
@@ -62,6 +66,8 @@ export interface AgentResponse {
   checkInSpotsCard?: CheckInSpotsCard;
   redPacketFlowCard?: RedPacketFlowCard;
   productRecommendCards?: ProductIntroCard[];
+  planCard?: PlanCard;
+  activityBookingCard?: ActivityBookingCard;
   followUpMessages?: AgentFollowUpMessage[];
   sideEffects?: AgentSideEffects;
 }

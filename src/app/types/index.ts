@@ -207,6 +207,71 @@ export interface RedPacketFlowCard {
   tip: string;
 }
 
+/**
+ * 行程规划卡 —— "今天怎么规划""吃饭前后还能安排什么"等问句的结构化分层展示。
+ * 按时段/动线分成若干段,每段带小 icon + 标题(如"正餐 · 7F")+ 段下条目,
+ * 由 PlanCardBubble 渲染成带层次、带 icon 的日程样式,而非平铺文字。
+ */
+export interface PlanCardItem {
+  /** 店铺/活动名,如"新荣记" */
+  name: string;
+  /** 类型标签,如"台州菜""法餐鉴赏""咖啡外带""活动" */
+  type: string;
+  /** 一句话角色说明,如"家烧黄鱼是招牌""饭后顺路来一杯" */
+  note: string;
+}
+
+export interface PlanCardSegment {
+  /** icon 键,由前端映射到 lucide 图标(dining/retail/coffee/activity/walk/start/end 等) */
+  iconKey: string;
+  /** 段标题,如"正餐""饭后逛""顺路活动" */
+  title: string;
+  /** 该段所在楼层,如"7F"(可空) */
+  floor?: string;
+  /** 段下条目 */
+  items: PlanCardItem[];
+}
+
+export interface PlanCard {
+  type: "plan-card";
+  /** 卡片眉标,如"DTX · 今日规划" */
+  eyebrow: string;
+  /** 卡片主标题,如"您的逛吃购行程" */
+  title: string;
+  segments: PlanCardSegment[];
+  /** 底部一句衔接建议(如"错峰用餐、顺路导引更从容") */
+  hint?: string;
+}
+
+export interface ActivityBookingInfo {
+  type: "activity-booking";
+  activityId: string;
+  activityName: string;
+  venue: string;
+  floor: string;
+  status: "pending" | "confirmed";
+  flowStatus?: "selecting_slot" | "collecting_party";
+  slotId?: string;
+  dateLabel?: string;
+  timeSlot?: string;
+  participantLabel?: string;
+  reservationId?: string;
+}
+
+export interface ActivityBookingCard {
+  type: "activity-booking-card";
+  activityName: string;
+  venue: string;
+  floor: string;
+  dateLabel: string;
+  timeSlot: string;
+  participantLabel: string;
+  reservationId: string;
+  status: "confirmed" | "cancelled";
+  statusLabel: string;
+  checkInNote: string;
+}
+
 export interface Message {
   id: string;
   role: "agent" | "user";
@@ -230,6 +295,8 @@ export interface Message {
   checkInSpotsCard?: CheckInSpotsCard;
   redPacketFlowCard?: RedPacketFlowCard;
   productRecommendCards?: ProductIntroCard[];
+  planCard?: PlanCard;
+  activityBookingCard?: ActivityBookingCard;
   streaming?: boolean;
 }
 
