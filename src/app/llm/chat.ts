@@ -103,7 +103,7 @@ export async function chat(
       const { text, quickReplies } = extractQuickReplies(rawText);
 
       const response: AgentResponse = {
-        text: text || "已收到您的需求，正在为您安排。",
+        text: text || "这次没有生成完整说明。您可以直接补充想去的店、到店时间或需要办理的事项，我会按具体信息继续处理。",
         quickReplies: quickReplies ?? ["查询停车状态", "今日专属优惠"],
         card: collectedCard,
         membershipAuthorizationCard: collectedMembershipAuthorizationCard,
@@ -260,7 +260,7 @@ export async function chat(
   // Safety: exceeded max rounds
   return {
     response: {
-      text: "已收到您的需求，处理步骤较多，正在为您安排。",
+      text: "这次需要处理的信息较多，暂时没能完成。请把最需要先处理的一项告诉我，我先替您办这一件。",
       quickReplies: ["查询停车状态", "今日专属优惠"],
       sideEffects: Object.keys(collectedSideEffects).length > 0
         ? (collectedSideEffects as AgentSideEffects)

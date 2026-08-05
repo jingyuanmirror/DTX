@@ -3,7 +3,12 @@ import { skills } from "../skills";
 import { setStoreConsultHistory, resetStoreConsultState } from "../skills/store-consult";
 import { isProductRecommendIntent } from "../skills/product-recommend";
 import { isCheckInSpotsQuery } from "../skills/check-in";
-import { isPlanningIntent, resetStoreRecommendState } from "../skills/store-recommend";
+import {
+  hasActivePlanningSession,
+  isPlanningContinuation,
+  isPlanningIntent,
+  resetStoreRecommendState,
+} from "../skills/store-recommend";
 import { detectPreference, isPreferenceExpression } from "../utils/preference";
 import { chat } from "../llm/chat";
 import { chatCompletion } from "../llm/client";
@@ -71,8 +76,8 @@ export async function route(
   } catch (error) {
     console.warn("LLM unavailable, falling back to default reply:", error);
     return {
-      text: "已收到您的需求，正在为您安排，请稍候片刻。如有任何进一步需求，请随时告知。",
-      quickReplies: ["查询停车状态", "今日专属优惠"],
+      text: "我刚才没接准您的需求。您可以直接告诉我想去的店、想安排的内容或到店时间，我会按这些信息继续处理。",
+      quickReplies: ["帮我规划路线", "查询停车状态", "今日专属优惠"],
     };
   }
 }
@@ -84,7 +89,7 @@ export async function route(
  * patterns miss and the bare LLM classifier historically mis-routed them.
  */
 const FOLLOWUP_PATTERN =
-  /换个(口味|品类|方向|店|家|餐厅|品牌)|再(推荐|来|换|给)(一家|一个|几个|别的|别的店|点)?|再来一家|另一(个|家|家店)|第[二三四五]家|这家(店|餐厅|怎么样|如何)|对比一下|继续(推荐|逛|吃)?|(就|那)(这家|这个)|便宜(点|些|的)|贵(点|些|的)|有(没有|没有更)(便宜|贵|好)的|还要(别的|其他|一个)|就这些|还有(别的|其他|什么)|这家不错|不错(呀|的|啊)|我?(?:(?:带(?:着)?)|和)(?:孩子|小孩|宝宝|娃|老人|长辈|朋友|家人)|我(?:一个人|自己)|(?:上午|早上)[^。]*(?:晚上|晚饭后)[^。]*(?:走|离开)/;
+  /换个(口味|品类|方向|店|家|餐厅|品牌)|再(推荐|来|换|给)(一家|一个|几个|别的|别的店|点)?|再来一家|另一(个|家|家店)|第[二三四五]家|这家(店|餐厅|怎么样|如何)|对比一下|继续(推荐|逛|吃)?|(就|那)(这家|这个)|便宜(点|些|的)|贵(点|些|的)|有(没有|没有更)(便宜|贵|好)的|还要(别的|其他|一个)|就这些|还有(别的|其他|什么)|这家不错|不错(呀|的|啊)|(?:不想|不打算|不要|别|不用)(?:再)?去|(?:去掉|删掉|移除|取消|换掉|不安排)|我?(?:(?:带(?:着)?)|和)(?:孩子|小孩|宝宝|娃|老人|长辈|朋友|家人)|我(?:一个人|自己)|(?:上午|早上)[^。]*(?:晚上|晚饭后)[^。]*(?:走|离开)/;
 
 function isFollowUp(text: string): boolean {
   return text.length <= 16 && FOLLOWUP_PATTERN.test(text);
@@ -113,11 +118,18 @@ const FOLLOWUP_REUSABLE_SKILLS = new Set([
  */
 async function routeBySkills(ctx: SkillContext): Promise<{ response: AgentResponse | null; skillName: string | null }> {
   /** Invoke a skill by name and wrap its response with the skill name. */
-  const run = async (name: string): Promise<{ response: AgentResponse | null; skillName: string | null }> => {
+  const run = async (
+    name: string,
+    skillCtx: SkillContext = ctx,
+  ): Promise<{ response: AgentResponse | null; skillName: string | null }> => {
     const skill = skills.find((s) => s.name === name);
     if (!skill) return { response: null, skillName: null };
-    return { response: await skill.handle(ctx), skillName: name };
+    return { response: await skill.handle(skillCtx), skillName: name };
   };
+  const continuePlanningContext = (): SkillContext => ({
+    ...ctx,
+    toolArgs: { ...ctx.toolArgs, continuePlanning: true },
+  });
   // If user is in the middle of a parking reservation (collecting plate), always route to parking skill
   if (ctx.parkingReservation?.status === "collecting_plate") {
     return run("parking");
@@ -157,6 +169,11 @@ async function routeBySkills(ctx: SkillContext): Promise<{ response: AgentRespon
     return run("membership");
   }
 
+  // 路线规划正在补齐条件时，“下午1点到”等短答案必须继续回到规划 skill。
+  if (isPlanningContinuation(ctx.text)) {
+    return run("store-recommend");
+  }
+
   // ── Follow-up reuse (上下文记忆) ──────────────────────────────────
   // 短的无主语追问(如"换个口味""再推荐一个""另一家呢")不携带任何主题关键词,
   // 确定性 pattern 会全部落空,只靠 LLM 分类器极易误判。此处沿用上一轮激活的
@@ -164,7 +181,12 @@ async function routeBySkills(ctx: SkillContext): Promise<{ response: AgentRespon
   // 由各自状态决定,不在此列。仍允许用户在新问句里带明确关键词自行跳转 ——
   // 后面的 pattern 会优先生效,所以但这步只接管"谁都不认领"的纯追问短句。
   if (isFollowUp(ctx.text) && lastActiveSkill && FOLLOWUP_REUSABLE_SKILLS.has(lastActiveSkill)) {
-    return run(lastActiveSkill);
+    return run(
+      lastActiveSkill,
+      lastActiveSkill === "store-recommend" && hasActivePlanningSession()
+        ? continuePlanningContext()
+        : ctx,
+    );
   }
 
   const qixiActivityPattern = /七夕(?:打卡|活动|碰出好喜气)|七夕.*(?:怎么玩|有什么)/;
@@ -204,6 +226,11 @@ const productNamePattern = /茉莉拿铁|瑞幸茉莉|春季茉莉|精选面膜|
   // 避免"上午到逛一天"这类补充信息丢失上一轮规划语境。
   const targetSkillName = await classifySkillIntent(ctx.text);
   if (!targetSkillName) {
+    // 已经生成过路线时，分类器无法单独识别的补充短句仍交回规划会话理解。
+    // store-recommend 会结合完整多轮记忆判断它是新增条件还是普通推荐请求。
+    if (lastActiveSkill === "store-recommend" && hasActivePlanningSession()) {
+      return run("store-recommend", continuePlanningContext());
+    }
     return { response: null, skillName: null };
   }
 
@@ -212,7 +239,14 @@ const productNamePattern = /茉莉拿铁|瑞幸茉莉|春季茉莉|精选面膜|
     setStoreConsultHistory(llmHistory.slice(-8));
   }
 
-  return run(targetSkillName);
+  return run(
+    targetSkillName,
+    targetSkillName === "store-recommend"
+      && lastActiveSkill === "store-recommend"
+      && hasActivePlanningSession()
+      ? continuePlanningContext()
+      : ctx,
+  );
 }
 
 async function classifySkillIntent(text: string): Promise<string | null> {
@@ -267,6 +301,7 @@ async function classifySkillIntent(text: string): Promise<string | null> {
         + "- 店铺/品类推荐：\"想逛逛\"、\"推荐个店\"、\"想买包推荐下\"、\"逛逛超市\"、\"带娃去哪逛\"、\"周末买点家居好物\"、\"生鲜\"、\"亲子\"、\"美妆\"、\"家居\"\n"
         + "- 活动推荐：\"今天有什么活动\"、\"有什么展览\"、\"近期活动\"、\"pop-up\"、\"鉴赏会\"、\"市集\" 等，综合店铺与活动一起推荐（活动为主、店铺为辅）\n"
         + "- 行程规划：\"吃饭前后还能安排什么\"、\"今天都能怎么规划\"、\"帮我规划路线\"、\"逛一圈怎么安排\"、\"带老人孩子随便逛逛\"、\"上午到晚上走怎么安排\"、\"待多久/逛一天/逛半天\"等任何想安排一趟整体行程或回答在场时长的表达,都路由到 store-recommend(由站内进一步区分规划 vs 单点推荐)\n"
+        + "- 若上下文刚生成过路线，用户继续补充想去的地点、想做的事、同行人、用餐或时间条件，属于对现有路线的增量调整，仍路由到 store-recommend；不得因本轮没有“规划/路线”字样而输出 NONE。\n"
         + "- 亲子餐厅对比（带决策维度）：\"哪个餐厅适合亲子\"\n"
         + "- 重要边界：查具体品牌位置/新品/联系SA走 store-consult；挑具体商品（\"七夕买什么\"\"送什么商品\"）走 product-recommend;\"七夕打卡活动怎么玩\"等活动介绍走 activity-intro；本skill只负责\"综合推荐店铺/餐厅/活动+行程规划\"\n\n"
         + "### product-recommend（节日/送礼商品推荐）\n"
