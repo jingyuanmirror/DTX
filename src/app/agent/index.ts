@@ -2,8 +2,8 @@ import type { AgentResponse, SkillContext } from "./types";
 import { skills } from "../skills";
 import { setStoreConsultHistory, resetStoreConsultState } from "../skills/store-consult";
 import { isProductRecommendIntent } from "../skills/product-recommend";
-import { isStoreRecommendIntent } from "../skills/store-recommend";
 import { isCheckInSpotsQuery } from "../skills/check-in";
+import { isPlanningIntent, resetStoreRecommendState } from "../skills/store-recommend";
 import { detectPreference, isPreferenceExpression } from "../utils/preference";
 import { chat } from "../llm/chat";
 import { chatCompletion } from "../llm/client";
@@ -26,6 +26,7 @@ export function resetLLMHistory() {
   llmHistory = [];
   lastActiveSkill = null;
   resetStoreConsultState();
+  resetStoreRecommendState();
 }
 
 /**
@@ -39,8 +40,12 @@ export async function route(
 ): Promise<AgentResponse> {
   // Always record the user message to history so context flows across turns
   llmHistory = [...llmHistory, { role: "user", content: ctx.text }];
+  const contextualCtx: SkillContext = {
+    ...ctx,
+    conversationHistory: llmHistory.slice(-8),
+  };
 
-  const { response, skillName } = await routeBySkills(ctx);
+  const { response, skillName } = await routeBySkills(contextualCtx);
   if (response) {
     // Record the skill's response so next turn's classifier sees it
     llmHistory = [...llmHistory, { role: "assistant", content: response.text }].slice(-30);
@@ -51,7 +56,7 @@ export async function route(
   try {
     const { response: llmResponse, newMessages } = await chat(
       ctx.text,
-      ctx,
+      contextualCtx,
       llmHistory,
       onToken ?? (() => {}),
     );
@@ -79,7 +84,7 @@ export async function route(
  * patterns miss and the bare LLM classifier historically mis-routed them.
  */
 const FOLLOWUP_PATTERN =
-  /换个(口味|品类|方向|店|家|餐厅|品牌)|再(推荐|来|换|给)(一家|一个|几个|别的|别的店|点)?|再来一家|另一(个|家|家店)|第[二三四五]家|这家(店|餐厅|怎么样|如何)|对比一下|继续(推荐|逛|吃)?|(就|那)(这家|这个)|便宜(点|些|的)|贵(点|些|的)|有(没有|没有更)(便宜|贵|好)的|还要(别的|其他|一个)|就这些|还有(别的|其他|什么)|这家不错|不错(呀|的|啊)/;
+  /换个(口味|品类|方向|店|家|餐厅|品牌)|再(推荐|来|换|给)(一家|一个|几个|别的|别的店|点)?|再来一家|另一(个|家|家店)|第[二三四五]家|这家(店|餐厅|怎么样|如何)|对比一下|继续(推荐|逛|吃)?|(就|那)(这家|这个)|便宜(点|些|的)|贵(点|些|的)|有(没有|没有更)(便宜|贵|好)的|还要(别的|其他|一个)|就这些|还有(别的|其他|什么)|这家不错|不错(呀|的|啊)|我?(?:(?:带(?:着)?)|和)(?:孩子|小孩|宝宝|娃|老人|长辈|朋友|家人)|我(?:一个人|自己)|(?:上午|早上)[^。]*(?:晚上|晚饭后)[^。]*(?:走|离开)/;
 
 function isFollowUp(text: string): boolean {
   return text.length <= 16 && FOLLOWUP_PATTERN.test(text);
@@ -178,12 +183,6 @@ async function routeBySkills(ctx: SkillContext): Promise<{ response: AgentRespon
     return run("check-in");
   }
 
-  // 亲子用餐属于带决策维度的餐厅推荐，直接进入 store-recommend 餐饮分支。
-  const familyDiningPattern = /亲子|带(?:小孩|孩子|宝宝|娃).*餐|儿童友好.*餐厅|餐厅.*(?:亲子|孩子|儿童)/;
-  if (familyDiningPattern.test(ctx.text)) {
-    return run("store-recommend");
-  }
-
 // Deterministic pattern matching for product/gift recommendation — bypass LLM classifier
 // "七夕适合买什么/七夕送什么/情人节买什么/纪念日送什么/有什么伴手礼" → product-recommend (多商品卡)
 if (isProductRecommendIntent(ctx.text)) {
@@ -195,20 +194,14 @@ const productNamePattern = /茉莉拿铁|瑞幸茉莉|春季茉莉|精选面膜|
     return run("product-intro");
   }
 
-  // Deterministic pattern matching for store recommend (餐饮/店铺推荐)
-  // "今天吃什么/午餐/晚餐" → store-recommend 餐饮分支(收口结构化推荐)
-  // "想逛逛/想买包/带娃去哪逛/生鲜超市" → store-recommend 零售分支
-  if (isStoreRecommendIntent(ctx.text)) {
+  // 行程规划是明确业务意图,直接进入规划 skill,避免 LLM 分类异常时丢失路线卡。
+  if (isPlanningIntent(ctx.text)) {
     return run("store-recommend");
   }
 
-  // Deterministic pattern matching for crowd/wait-time queries — bypass LLM classifier
-  // "人多嘛/人多吗/拥挤吗/排队多久/排队长吗" + brand → cross-sell
-  const crowdWaitPattern = /人多[嘛吗？?]|拥挤[嘛吗？?]|排队多久|排队长[嘛吗？?]|要等多久|等多久/;
-  if (crowdWaitPattern.test(ctx.text)) {
-    return run("cross-sell");
-  }
-
+  // 其余意图(餐饮/店铺推荐、排队拥挤、活动咨询等)统一交 LLM 路由器。
+  // store-recommend 内部再用上下文解析 + 明确规划/时间表达兜底,
+  // 避免"上午到逛一天"这类补充信息丢失上一轮规划语境。
   const targetSkillName = await classifySkillIntent(ctx.text);
   if (!targetSkillName) {
     return { response: null, skillName: null };
@@ -273,7 +266,7 @@ async function classifySkillIntent(text: string): Promise<string | null> {
         + "- 餐厅信息：\"新荣记\"、\"大董\"、\"鼎泰丰\"、\"海底捞\"、\"喜茶\"、\"美食广场\"等餐厅推荐\n"
         + "- 店铺/品类推荐：\"想逛逛\"、\"推荐个店\"、\"想买包推荐下\"、\"逛逛超市\"、\"带娃去哪逛\"、\"周末买点家居好物\"、\"生鲜\"、\"亲子\"、\"美妆\"、\"家居\"\n"
         + "- 活动推荐：\"今天有什么活动\"、\"有什么展览\"、\"近期活动\"、\"pop-up\"、\"鉴赏会\"、\"市集\" 等，综合店铺与活动一起推荐（活动为主、店铺为辅）\n"
-        + "- 行程规划：\"吃饭前后还能安排什么\"、\"今天都能怎么规划\"、\"帮我规划路线\"、\"逛一圈怎么安排\"\n"
+        + "- 行程规划：\"吃饭前后还能安排什么\"、\"今天都能怎么规划\"、\"帮我规划路线\"、\"逛一圈怎么安排\"、\"带老人孩子随便逛逛\"、\"上午到晚上走怎么安排\"、\"待多久/逛一天/逛半天\"等任何想安排一趟整体行程或回答在场时长的表达,都路由到 store-recommend(由站内进一步区分规划 vs 单点推荐)\n"
         + "- 亲子餐厅对比（带决策维度）：\"哪个餐厅适合亲子\"\n"
         + "- 重要边界：查具体品牌位置/新品/联系SA走 store-consult；挑具体商品（\"七夕买什么\"\"送什么商品\"）走 product-recommend;\"七夕打卡活动怎么玩\"等活动介绍走 activity-intro；本skill只负责\"综合推荐店铺/餐厅/活动+行程规划\"\n\n"
         + "### product-recommend（节日/送礼商品推荐）\n"

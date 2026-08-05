@@ -82,6 +82,7 @@ export function executeTool(
       checkInSpotsCard: response.checkInSpotsCard,
       redPacketFlowCard: response.redPacketFlowCard,
       productRecommendCards: response.productRecommendCards,
+      planCard: response.planCard,
       activityBookingCard: response.activityBookingCard,
     };
   });

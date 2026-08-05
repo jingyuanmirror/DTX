@@ -99,9 +99,9 @@ export const ACTIVITIES: Activity[] = [
   },
   {
     id: "act-008",
-    title: "DTX-S 先锋艺术装置展",
+    title: "teamLab 沉浸光影艺术展",
     summary:
-      "数字艺术团队 teamLab 全新沉浸装置「无界·宇宙」，DTX-S 四楼全景呈现，会员免费观展。",
+      "数字艺术团队 teamLab 全新沉浸光影装置「无界·宇宙」，声光互动、镜面无限延展，适合夜间观展；DTX-S 四楼全景呈现，会员免费观展。",
     floor: "4F-DTX-S",
     dateRange: "6/20 – 8/31",
     categories: ["先锋设计师"],

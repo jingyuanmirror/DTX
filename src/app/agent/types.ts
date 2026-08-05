@@ -1,4 +1,5 @@
 import type { ActivityBookingCard, ActivityBookingInfo, ActivityIntroCard, AppointmentCard, AppointmentInfo, BrandCard, CheckInCard, CheckInSpotsCard, CouponCard, MemberCard, MembershipAuthorizationCard, NewMemberOfferCard, ParkingCard, ParkingInfo, ParkingReservation, ParkingShoppingGuideCard, PlanCard, ProductIntroCard, QueueCard, QueueInfo, RedPacketFlowCard, ReservationCard, RestaurantCard, UserProfile } from "../types";
+import type { ChatMessage } from "../llm/types";
 
 export interface SkillContext {
   text: string;
@@ -8,6 +9,8 @@ export interface SkillContext {
   queueInfo: QueueInfo | null;
   appointmentInfo: AppointmentInfo | null;
   activityBookingInfo: ActivityBookingInfo | null;
+  /** Recent user/assistant turns for skills that need to resolve contextual replies. */
+  conversationHistory?: ChatMessage[];
   /** Structured arguments from the LLM's function call (read alongside `text`). */
   toolArgs?: Record<string, unknown>;
 }

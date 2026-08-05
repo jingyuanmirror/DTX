@@ -54,7 +54,7 @@ export function PlanCardBubble({ card }: { card: PlanCard }) {
                       </div>
                       {item.note && (
                         <p className="mt-0.5 text-[10px] leading-4 text-[#777067]">
-                          <span className="font-medium text-[#7A69E2]">推荐 · </span>{item.note}
+                          <span className="font-medium text-[#7A69E2]">到店看点 · </span>{item.note}
                         </p>
                       )}
                     </div>
